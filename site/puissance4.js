@@ -406,7 +406,7 @@ function getBestMoveInCaseOfEqualities(combinaisons, weight, listHashParents, ro
         }
         definitiveChildren.push(...children);
     }
-    if (roundNumber <= numberOfTurnsForSimulation) {
+    if (roundNumber <= numberOfTurnsForSimulation-1) {
         if (isFound) {
             return hashResult;
         }
