@@ -1,0 +1,51 @@
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; /* Space between buttons */
+}
+.button-container a {
+    text-decoration: none; /* Remove underline from links */
+}
+.button-container button {
+    font-size: 24px; /* Very big */
+    background-color: rgb(0, 110, 255); /* Blue background */
+    border: 5px solid orange; /* Yellow/Orange border of 5px */
+    border-radius: 10px; /* Rounded corners */
+    color: white; /* White text color */
+    padding: 15px 30px; /* Padding for a flat appearance */
+    cursor: pointer; /* Pointer cursor on hover */
+    width: 250px; /* Fixed width for buttons */
+    text-align: center; /* Center text inside button */
+    transition: background-color 0.3s; /* Smooth transition for background color */
+}
+.button-container button:hover {
+    background-color: lightblue; /* Lighter blue background on hover */
+}
+/* New styles for centering and spacing */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+p {
+    margin-bottom: 20px;
+}
+
+.footer {
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
