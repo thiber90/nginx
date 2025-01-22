@@ -313,14 +313,14 @@ function remonterScore(combinaisons) {
             // si le node n'a pas d'enfants ou si il s'agit du dernier tour de simu 
             // il faut calculer le poids
             if (i === numberOfTurnsForSimulation || node.hashChildren.length===0) {
-                node.weight = evaluateSituation(node.grille, 2) - 2 * evaluateSituation(node.grille, 1);
+                node.weight = 2 * evaluateSituation(node.grille, 1) - 2 * evaluateSituation(node.grille, 2);
             } else {
                 // sinon il faut récupérer les enfants, et calculer le max       
                 let weight;
                 for (let childNode of node.hashChildren) {
                     let weightOfChildNode = getNodeWithHash(combinaisons, childNode).weight;               
                     // Remonter le poids min
-                    if (weight == null || weight === 0 || weightOfChildNode < weight) {
+                    if (weight == null || weight === 0 || weightOfChildNode > weight) {
                         weight = weightOfChildNode;
                     }
                 }
@@ -333,7 +333,7 @@ function remonterScore(combinaisons) {
 
 function getBestMove(combinaisons) {
     let nodesFirstRound = getNodesEnFonctionDuTour(combinaisons, 1);
-    let maximumWeight = -Infinity; 
+    let maximumWeight = Infinity; 
     let nodesWithSameMinimalScore = [];
 
    // security, check if one shot would win	
@@ -343,9 +343,9 @@ function getBestMove(combinaisons) {
         }
     });
 
-    // Set the maximun weight
+    // Set the minimum weight
     nodesFirstRound.forEach(function(item) {
-        if (item.weight > maximumWeight) {
+        if (item.weight < maximumWeight) {
             maximumWeight = item.weight;
         }
     });
