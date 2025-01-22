@@ -181,25 +181,25 @@ const PATTERN_GAGNE_3 = new Pattern([new Point(0, 0), new Point(1, 0), new Point
 const PATTERN_GAGNE_4 = new Pattern([new Point(0, 0), new Point(1, -1), new Point(2, -2), new Point(3, -3)], 10000);
 const PATTERNS_GAGNE = [PATTERN_GAGNE_1, PATTERN_GAGNE_2, PATTERN_GAGNE_3, PATTERN_GAGNE_4];
 
-const PATTERN_3_EN_LIGNE_1 = new Pattern([new Point(0, 0), new Point(0, 1), new Point(0, 2), getBlankPoint(0, 3)], 200);
-const PATTERN_3_EN_LIGNE_2 = new Pattern([new Point(0, 0), new Point(1, 1), new Point(2, 2), getBlankPoint(3, 3)], 200);
-const PATTERN_3_EN_LIGNE_3 = new Pattern([new Point(0, 0), new Point(1, 0), new Point(2, 0), getBlankPoint(3, 0)], 200);
-const PATTERN_3_EN_LIGNE_4 = new Pattern([new Point(0, 0), new Point(1, -1), new Point(2, -2), getBlankPoint(3, -3)], 200);
-const PATTERN_3_EN_LIGNE_5 = new Pattern([getBlankPoint(0, 0), new Point(0, 1), new Point(0, 2), new Point(0, 3)], 200);
-const PATTERN_3_EN_LIGNE_6 = new Pattern([getBlankPoint(0, 0), new Point(1, 1), new Point(2, 2), new Point(3, 3)], 200);
-const PATTERN_3_EN_LIGNE_7 = new Pattern([getBlankPoint(0, 0), new Point(1, 0), new Point(2, 0), new Point(3, 0)], 200);
-const PATTERN_3_EN_LIGNE_8 = new Pattern([getBlankPoint(0, 0), new Point(1, -1), new Point(2, -2), new Point(3, -3)], 200);
+const PATTERN_3_EN_LIGNE_1 = new Pattern([new Point(0, 0), new Point(0, 1), new Point(0, 2), getBlankPoint(0, 3)], 600);
+const PATTERN_3_EN_LIGNE_2 = new Pattern([new Point(0, 0), new Point(1, 1), new Point(2, 2), getBlankPoint(3, 3)], 600);
+const PATTERN_3_EN_LIGNE_3 = new Pattern([new Point(0, 0), new Point(1, 0), new Point(2, 0), getBlankPoint(3, 0)], 600);
+const PATTERN_3_EN_LIGNE_4 = new Pattern([new Point(0, 0), new Point(1, -1), new Point(2, -2), getBlankPoint(3, -3)], 600);
+const PATTERN_3_EN_LIGNE_5 = new Pattern([getBlankPoint(0, 0), new Point(0, 1), new Point(0, 2), new Point(0, 3)], 600);
+const PATTERN_3_EN_LIGNE_6 = new Pattern([getBlankPoint(0, 0), new Point(1, 1), new Point(2, 2), new Point(3, 3)], 600);
+const PATTERN_3_EN_LIGNE_7 = new Pattern([getBlankPoint(0, 0), new Point(1, 0), new Point(2, 0), new Point(3, 0)], 600);
+const PATTERN_3_EN_LIGNE_8 = new Pattern([getBlankPoint(0, 0), new Point(1, -1), new Point(2, -2), new Point(3, -3)], 600);
 
 
-const PATTERN_1_2_1 = new Pattern([new Point(0, 0), getBlankPoint(0, 1), new Point(0, 2), new Point(0, 3)], 200);
-const PATTERN_1_2_2 = new Pattern([new Point(0, 0), getBlankPoint(1, 1), new Point(2, 2), new Point(3, 3)], 200);
-const PATTERN_1_2_3 = new Pattern([new Point(0, 0), getBlankPoint(1, 0), new Point(2, 0), new Point(3, 0)], 200);
-const PATTERN_1_2_4 = new Pattern([new Point(0, 0), getBlankPoint(1, -1), new Point(2, -2), new Point(3, -3)], 200);
+const PATTERN_1_2_1 = new Pattern([new Point(0, 0), getBlankPoint(0, 1), new Point(0, 2), new Point(0, 3)], 600);
+const PATTERN_1_2_2 = new Pattern([new Point(0, 0), getBlankPoint(1, 1), new Point(2, 2), new Point(3, 3)], 600);
+const PATTERN_1_2_3 = new Pattern([new Point(0, 0), getBlankPoint(1, 0), new Point(2, 0), new Point(3, 0)], 600);
+const PATTERN_1_2_4 = new Pattern([new Point(0, 0), getBlankPoint(1, -1), new Point(2, -2), new Point(3, -3)], 600);
 
-const PATTERN_2_1_1 = new Pattern([new Point(0, 0), new Point(0, 1), getBlankPoint(0, 2), new Point(0, 3)], 200);
-const PATTERN_2_1_2 = new Pattern([new Point(0, 0), new Point(1, 1), getBlankPoint(2, 2), new Point(3, 3)], 200);
-const PATTERN_2_1_3 = new Pattern([new Point(0, 0), new Point(1, 0), getBlankPoint(2, 0), new Point(3, 0)], 200);
-const PATTERN_2_1_4 = new Pattern([new Point(0, 0), new Point(1, -1), getBlankPoint(2, -2), new Point(3, -3)], 200);
+const PATTERN_2_1_1 = new Pattern([new Point(0, 0), new Point(0, 1), getBlankPoint(0, 2), new Point(0, 3)], 600);
+const PATTERN_2_1_2 = new Pattern([new Point(0, 0), new Point(1, 1), getBlankPoint(2, 2), new Point(3, 3)], 600);
+const PATTERN_2_1_3 = new Pattern([new Point(0, 0), new Point(1, 0), getBlankPoint(2, 0), new Point(3, 0)], 600);
+const PATTERN_2_1_4 = new Pattern([new Point(0, 0), new Point(1, -1), getBlankPoint(2, -2), new Point(3, -3)], 600);
 
 const PATTERN_2_EN_LIGNE_FIRST_1 = new Pattern([new Point(0, 0), new Point(0, 1), getBlankPoint(0, 2)], 100);
 const PATTERN_2_EN_LIGNE_FIRST_2 = new Pattern([new Point(0, 0), new Point(1, 1), getBlankPoint(2, 2)], 100);
