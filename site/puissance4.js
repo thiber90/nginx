@@ -313,7 +313,7 @@ function remonterScore(combinaisons) {
             // si le node n'a pas d'enfants ou si il s'agit du dernier tour de simu 
             // il faut calculer le poids
             if (i === numberOfTurnsForSimulation || node.hashChildren.length===0) {
-                node.weight = 2 * evaluateSituation(node.grille, 1) - 2 * evaluateSituation(node.grille, 2);
+                node.weight = 2 * evaluateSituation(node.grille, 1) - evaluateSituation(node.grille, 2);
             } else {
                 // sinon il faut récupérer les enfants, et calculer le max       
                 let weight;
