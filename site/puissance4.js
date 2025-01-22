@@ -319,8 +319,8 @@ function remonterScore(combinaisons) {
                 let weight;
                 for (let childNode of node.hashChildren) {
                     let weightOfChildNode = getNodeWithHash(combinaisons, childNode).weight;               
-                    // Remonter le poids max
-                    if (weight == null || weight === 0 || weightOfChildNode > weight) {
+                    // Remonter le poids min
+                    if (weight == null || weight === 0 || weightOfChildNode < weight) {
                         weight = weightOfChildNode;
                     }
                 }
