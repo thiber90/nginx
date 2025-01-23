@@ -152,34 +152,131 @@ function getRandomWords(selectedLanguage) {
 
 
 
+// Function to check if a word can fit in a given position without altering existing letters
+function canPlaceWord(word, startX, startY, direction) {
+    let x = startX;
+    let y = startY;
+    for (let i = 0; i < word.length; i++) {
+        if (grille.getPoint(x, y).lettre !== '' && grille.getPoint(x, y).lettre !== word[i]) {
+            return false; // Existing letter conflicts with the word
+        }
+        // Move to the next cell in the specified direction
+        if (direction === 1) { // left to right
+            x++;
+        } else if (direction === 2) { // diagonal bottom-left to top-right
+            x++;
+            y++;
+        } else if (direction === 3) { // bottom to top
+            y++;
+        } else if (direction === 4) { // diagonal bottom-right to top-left
+            x--;
+            y++;
+        } else if (direction === 5) { // right to left
+            x--;
+        } else if (direction === 6) { // diagonal top-right to bottom-left
+            x--;
+            y--;
+        } else if (direction === 7) { // top to bottom
+            y--;
+        } else if (direction === 8) { // diagonal top-left to bottom-right
+            x++;
+            y--;
+        }
+    }
+    return true;
+}
+
+// Function to evaluate node possibilities
+function evaluateNodePossibilities(node) {
+    var possibleNodes = [];
+
+    // direction 1 (left to right)
+    if (node.word.length - ((tailleGrille) - node.point.x) <= 0) {
+        if (canPlaceWord(node.word, node.point.x, node.point.y, 1)) {
+            possibleNodes.push(new Node(node.word, node.point, 1));
+        }
+    }
+
+    // direction 2 (diagonal bottom-left to top-right)
+    if (node.word.length - Math.min((tailleGrille) - node.point.x, (tailleGrille) - node.point.y) <= 0) {
+        if (canPlaceWord(node.word, node.point.x, node.point.y, 2)) {
+            possibleNodes.push(new Node(node.word, node.point, 2));
+        }
+    }
+
+    // direction 3 (bottom to top)
+    if (node.word.length - ((tailleGrille) - node.point.y) <= 0) {
+        if (canPlaceWord(node.word, node.point.x, node.point.y, 3)) {
+            possibleNodes.push(new Node(node.word, node.point, 3));
+        }
+    }
+
+    // direction 4 (diagonal bottom-right to top-left)
+    if (node.word.length - Math.min(node.point.x + 1, (tailleGrille) - node.point.y) <= 0) {
+        if (canPlaceWord(node.word, node.point.x, node.point.y, 4)) {
+            possibleNodes.push(new Node(node.word, node.point, 4));
+        }
+    }
+
+    // direction 5 (right to left)
+    if (node.word.length - (node.point.x + 1) <= 0) {
+        if (canPlaceWord(node.word, node.point.x, node.point.y, 5)) {
+            possibleNodes.push(new Node(node.word, node.point, 5));
+        }
+    }
+
+    // direction 6 (diagonal top-right to bottom-left)
+    if (node.word.length - Math.min(node.point.x + 1, node.point.y + 1) <= 0) {
+        if (canPlaceWord(node.word, node.point.x, node.point.y, 6)) {
+            possibleNodes.push(new Node(node.word, node.point, 6));
+        }
+    }
+
+    // direction 7 (top to bottom)
+    if (node.word.length - (node.point.y + 1) <= 0) {
+        if (canPlaceWord(node.word, node.point.x, node.point.y, 7)) {
+            possibleNodes.push(new Node(node.word, node.point, 7));
+        }
+    }
+
+    // direction 8 (diagonal top-left to bottom-right)
+    if (node.word.length - Math.min((tailleGrille) - node.point.x, node.point.y + 1) <= 0) {
+        if (canPlaceWord(node.word, node.point.x, node.point.y, 8)) {
+            possibleNodes.push(new Node(node.word, node.point, 8));
+        }
+    }
+
+    return possibleNodes;
+}
+
 // function qui retourne les mots choisis au hasard et retourne des nodes
 function populateGrille(selectedLanguage){
     var words = getRandomWords(selectedLanguage);
 
-        var i = 0;
-        var nodes = [];
-        while (nodes.length < nbMots) {
-            let chosenNode;
-            let possibleNodes = getPossibleNodesForAWord(words[i]);
-            if (possibleNodes.length > 0) {
-                if(nodes.length===0 || calculatePercentageDiagWords(nodes)<0.5){
-                    let diagNodes = filterNodestoGetOnlyDiag(possibleNodes);
-                    if(diagNodes.length>0){
-                        chosenNode = diagNodes[Math.floor(Math.random() * diagNodes.length)];
-                    }
-                } else {
-                    chosenNode = possibleNodes[Math.floor(Math.random() * possibleNodes.length)];
+    var i = 0;
+    var nodes = [];
+    while (nodes.length < nbMots) {
+        let chosenNode;
+        let possibleNodes = evaluateNodePossibilities(new Node(words[i], {x: 0, y: 0})); // Updated to use evaluateNodePossibilities
+        if (possibleNodes.length > 0) {
+            if(nodes.length===0 || calculatePercentageDiagWords(nodes)<0.5){
+                let diagNodes = filterNodestoGetOnlyDiag(possibleNodes);
+                if(diagNodes.length>0){
+                    chosenNode = diagNodes[Math.floor(Math.random() * diagNodes.length)];
                 }
-                if(chosenNode!==undefined){
+            } else {
+                chosenNode = possibleNodes[Math.floor(Math.random() * possibleNodes.length)];
+            }
+            if(chosenNode!==undefined){
                 nodes.push(chosenNode);
                 addWordToTheGrille(chosenNode);
-                }
-          }
-            i++;
+            }
         }
-       gridNodes.push(...nodes)
-       // générer des lettres aléatoires, disabled at the moment for testing
-        fillGridWithRandomLetters();
+        i++;
+    }
+    gridNodes.push(...nodes);
+    // générer des lettres aléatoires, disabled at the moment for testing
+    fillGridWithRandomLetters();
 }
 
 function filterNodestoGetOnlyDiag(nodes){
@@ -234,18 +331,6 @@ function addWordToTheGrille(node) {
     }
 }
 
-// evaluate all the possibilities for a word to be put in the grille (at all the possible points)
-function getPossibleNodesForAWord(word){
-
-    var possibleNodes = [];
-    for (let point of grille.points) {
-        let node = new Node(word, point, 0); // Example direction
-        let nodes = evaluateNodePossibilities(node);
-        possibleNodes = possibleNodes.concat(nodes);
-    }
-    return possibleNodes;
-
-}
 
 function calculatePercentageDiagWords(nodes){
     var diagWords = 0;
@@ -255,109 +340,6 @@ function calculatePercentageDiagWords(nodes){
         }   
     }
     return diagWords/nodes.length;
-}
-
-// evaluate de possibility for a word to be put at a certain point
-function evaluateNodePossibilities(node) {
-    var possibleNodes = [];
-
-    // direction 1 (left to right)
-    if (node.word.length - ((tailleGrille) - node.point.x) <= 0) {
-        for (let i = 0; i < node.word.length; i++) {
-            if (grille.getPoint(node.point.x + i, node.point.y).lettre !== "" && grille.getPoint(node.point.x + i, node.point.y).lettre !== node.word.charAt(i)) {
-                break;
-            }
-            if (i === node.word.length - 1) {
-                possibleNodes.push(new Node(node.word, node.point, 1));
-            }
-        }
-    }
-
-    // direction 2 (diagonal bottom-left to top-right)
-    if (node.word.length - Math.min((tailleGrille) - node.point.x, (tailleGrille) - node.point.y) <= 0) {
-        for (let i = 0; i < node.word.length; i++) {
-            if (grille.getPoint(node.point.x + i, node.point.y + i).lettre !== "" && grille.getPoint(node.point.x + i, node.point.y + i).lettre !== node.word.charAt(i)) {
-                break;
-            }
-            if (i === node.word.length - 1) {
-                possibleNodes.push(new Node(node.word, node.point, 2));
-            }
-        }
-    }
-
-    // direction 3 (bottom to top)
-    if (node.word.length - ((tailleGrille) - node.point.y) <= 0) {
-        for (let i = 0; i < node.word.length; i++) {
-            if (grille.getPoint(node.point.x, node.point.y + i).lettre !== "" && grille.getPoint(node.point.x, node.point.y + i).lettre !== node.word.charAt(i)) {
-                break;
-            }
-            if (i === node.word.length - 1) {
-                possibleNodes.push(new Node(node.word, node.point, 3));
-            }
-        }
-    }
-
-    // direction 4 (diagonal bottom-right to top-left)
-    if (node.word.length - Math.min(node.point.x + 1, (tailleGrille) - node.point.y)<= 0) {
-        for (let i = 0; i < node.word.length; i++) {
-            if (grille.getPoint(node.point.x - i, node.point.y - i).lettre !== "" && grille.getPoint(node.point.x - i, node.point.y - i).lettre !== node.word.charAt(i)) {
-                break;
-            }
-            if (i === node.word.length - 1) {
-                possibleNodes.push(new Node(node.word, node.point, 4));
-            }
-        }
-    }
-
-    // direction 5 (right to left)
-    if (node.word.length - (node.point.x + 1) <= 0) {
-        for (let i = 0; i < node.word.length; i++) {
-            if (grille.getPoint(node.point.x - i, node.point.y).lettre !== "" && grille.getPoint(node.point.x - i, node.point.y).lettre !== node.word.charAt(i)) {
-                break;
-            }
-            if (i === node.word.length - 1) {
-                possibleNodes.push(new Node(node.word, node.point, 5));
-            }
-        }
-    }
-
-    // direction 6 (diagonal top-right to bottom-left)
-    if (node.word.length - Math.min(node.point.x + 1,  node.point.y + 1) <= 0) {
-        for (let i = 0; i < node.word.length; i++) {
-            if (grille.getPoint(node.point.x - i, node.point.y + i).lettre !== "" && grille.getPoint(node.point.x - i, node.point.y + i).lettre !== node.word.charAt(i)) {
-                break;
-            }
-            if (i === node.word.length - 1) {
-                possibleNodes.push(new Node(node.word, node.point, 6));
-            }
-        }
-    }
-
-    // direction 7 (top to bottom)
-    if (node.word.length - ( node.point.y + 1) <= 0) {
-        for (let i = 0; i < node.word.length; i++) {
-            if (grille.getPoint(node.point.x, node.point.y - i).lettre !== "" && grille.getPoint(node.point.x, node.point.y - i).lettre !== node.word.charAt(i)) {
-                break;
-            }
-            if (i === node.word.length - 1) {
-                possibleNodes.push(new Node(node.word, node.point, 7));
-            }
-        }
-    }
-
-    // direction 8 (diagonal top-left to bottom-right)
-    if (node.word.length - Math.min((tailleGrille) - node.point.x,  node.point.y + 1) <= 0) {
-        for (let i = 0; i < node.word.length; i++) {
-            if (grille.getPoint(node.point.x + i, node.point.y - i).lettre !== "" && grille.getPoint(node.point.x + i, node.point.y - i).lettre !== node.word.charAt(i)) {
-                break;
-            }
-            if (i === node.word.length - 1) {
-                possibleNodes.push(new Node(node.word, node.point, 8));
-            }
-        }
-    }
-
-    return possibleNodes;
 }
 
 
