@@ -249,6 +249,19 @@ function evaluateNodePossibilities(node) {
     return possibleNodes;
 }
 
+// evaluate all the possibilities for a word to be put in the grille (at all the possible points)
+function getPossibleNodesForAWord(word){
+
+    var possibleNodes = [];
+    for (let point of grille.points) {
+        let node = new Node(word, new Point(point.x, point.y, ""), 0); // Example direction
+        let nodes = evaluateNodePossibilities(node);
+        possibleNodes = possibleNodes.concat(nodes);
+    }
+    return possibleNodes;
+
+}
+
 // function qui retourne les mots choisis au hasard et retourne des nodes
 function populateGrille(selectedLanguage){
     var words = getRandomWords(selectedLanguage);
@@ -257,7 +270,7 @@ function populateGrille(selectedLanguage){
     var nodes = [];
     while (nodes.length < nbMots) {
         let chosenNode;
-        let possibleNodes = evaluateNodePossibilities(new Node(words[i], {x: 0, y: 0})); // Updated to use evaluateNodePossibilities
+        let possibleNodes = getPossibleNodesForAWord(words[i]); // Updated to use evaluateNodePossibilities
         if (possibleNodes.length > 0) {
             if(nodes.length===0 || calculatePercentageDiagWords(nodes)<0.5){
                 let diagNodes = filterNodestoGetOnlyDiag(possibleNodes);
