@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris</title>
+    <link rel="stylesheet" type="text/css" href="tetris.css">
+</head>
+
+<body>
+    <h1>Tetris</h1>
+    <div class="container">
+        <canvas id="myCanvas" width="400" height="800"></canvas>
+
+        <div id="wordsPanel">
+            <p><b>Instructions :</b> Use the Left/Right arrow keys to move the falling Tetriminos. Down arrow will speed
+                up the fall. Spacebar will rotate the piece.</p>
+            <br>
+            <div id="time">Time : 00:00</div>
+            <br>
+            <div id="score">Score : 0</div>
+        </div>
+    </div>
+
+
+    <br>
+    <div id="gameStatus">Your turn</div> <!-- Panel to display game status -->
+    <br>
+    <div class="button-container">
+
+        <button id="startButton">Start/Restart</button>
+    </div>
+    <audio id="collisionSound" src="click2.wav"></audio> <!-- Add your sound file here -->
+
+
+
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const collisionSound = document.getElementById('collisionSound');
+        const ctx = canvas.getContext('2d');
+        var speed = 1000;
+        var timeSinceLastframe = 0;
+        var timeSinceStartDeletion = 0;
+        var timeDeletetion = 1000;
+        var lastTime = 0;
+        var deltaTime = 0
+        let linesCompleted = [];
+        let stopanimation = true;
+        let animationFrameId;
+        const blocWidth = 40;
+        const blocHeight = 40;
+        const colors = ['red', 'blue', 'green', 'yellow'];
+        let bloc;
+        let grille = [];
+        let startTime;
+        let timerInterval;
+        let score = 0;
+
+
+        class Bloc {
+
+
+            constructor(x, y, form, uuid) {
+                this.x = x;
+                this.y = y;
+                this.uuid = uuid;
+                this.form = form;
+                this.moving = false;
+            }
+
+            setMoving(moving) {
+                this.moving = moving;
+            }
+
+            getPatternIndex(pattern) {
+                return this.form.patterns.indexOf(pattern);
+            }
+
+            rotate() {
+                for (let i = 1; i < this.form.patterns.length; i++) {
+                    {
+                        let index = (this.getPatternIndex(this.form.currentPattern) + i) % this.form.patterns.length;
+
+                        if (checkRotateToNewPatternPossible(this.uuid, { x: this.x, y: this.y }, this.form.patterns[index].points)) {
+                            this.form.currentPattern = this.form.patterns[index];
+                            break;
+                        }
+
+                    }
+                }
+            }
+
+
+            changeOrigine(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+
+        }
+
+
+
+
+
+        class Point {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.color = null;
+            }
+
+            setUUID(uuid) {
+                this.uuid = uuid;
+            }
+            setColor(color) {
+                this.color = color;
+            }
+
+        }
+
+        class Pattern {
+            constructor(points) {
+                this.points = points;
+            }
+        }
+
+        class Form {
+            constructor(patterns, color) {
+                this.patterns = patterns;
+                this.color = color;
+                this.currentPattern = patterns[0];
+            }
+
+
+        }
+
+        const PATTERN_O = [
+            new Pattern([new Point(0, 0), new Point(1, 0), new Point(0, -1), new Point(1, -1)])
+        ];
+
+        const PATTERN_I = [
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(0, -2), new Point(0, -3)]),
+            new Pattern([new Point(0, 0), new Point(1, 0), new Point(2, 0), new Point(3, 0)])
+        ];
+
+        const PATTERN_T = [
+            new Pattern([new Point(0, 0), new Point(-1, 0), new Point(1, 0), new Point(0, -1)]),
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(0, 1), new Point(1, 0)]),
+            new Pattern([new Point(0, 0), new Point(-1, 0), new Point(1, 0), new Point(0, 1)]),
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(0, 1), new Point(-1, 0)])
+        ];
+
+        const PATTERN_S = [
+            new Pattern([new Point(0, 0), new Point(1, 0), new Point(0, -1), new Point(-1, -1)]),
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(1, -1), new Point(1, -2)])
+        ];
+
+        const PATTERN_Z = [
+            new Pattern([new Point(0, 0), new Point(-1, 0), new Point(0, -1), new Point(1, -1)]),
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(-1, -1), new Point(-1, -2)])
+        ];
+
+        const PATTERN_J = [
+            new Pattern([new Point(0, 0), new Point(-1, 0), new Point(1, 0), new Point(-1, -1)]),
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(0, 1), new Point(1, -1)]),
+            new Pattern([new Point(0, 0), new Point(-1, 0), new Point(1, 0), new Point(1, 1)]),
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(0, 1), new Point(-1, 1)])
+        ];
+
+        const PATTERN_L = [
+            new Pattern([new Point(0, 0), new Point(-1, 0), new Point(1, 0), new Point(1, -1)]),
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(0, 1), new Point(1, 1)]),
+            new Pattern([new Point(0, 0), new Point(-1, 0), new Point(1, 0), new Point(-1, 1)]),
+            new Pattern([new Point(0, 0), new Point(0, -1), new Point(0, 1), new Point(-1, -1)])
+        ];
+
+        // Create a Map to store patterns
+        const patternsMap = new Map();
+        patternsMap.set('O', PATTERN_O);
+        patternsMap.set('I', PATTERN_I);
+        patternsMap.set('T', PATTERN_T);
+        patternsMap.set('S', PATTERN_S);
+        patternsMap.set('Z', PATTERN_Z);
+        patternsMap.set('J', PATTERN_J);
+        patternsMap.set('L', PATTERN_L);
+
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTime, 1000);
+        }
+
+        function updateTime() {
+            const elapsedTime = Date.now() - startTime;
+            const minutes = Math.floor(elapsedTime / 60000);
+            const seconds = Math.floor((elapsedTime % 60000) / 1000);
+            time.textContent = `Time : ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function generateRandomBloc() {
+            const keys = Array.from(patternsMap.keys());
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomPatterns = patternsMap.get(randomKey);
+            const randomColor = colors[Math.floor(Math.random() * 4)]; // Random color
+            let blocToGenerate = new Bloc(4, 0, new Form(randomPatterns, randomColor), generateUUID());
+            blocToGenerate.setMoving(true);
+            bloc = blocToGenerate;
+        }
+
+        function updateGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous frame
+
+            if (bloc.moving === true) {
+                for (point of bloc.form.currentPattern.points) {
+                    if (bloc.x + point.x >= 0 && bloc.x + point.x < 10 && bloc.y + point.y >= 0 && bloc.y + point.y < 20) {
+                        let pointToAdd = new Point(bloc.x + point.x, bloc.y + point.y);
+                        pointToAdd.setColor(bloc.form.color);
+                        pointToAdd.setUUID(bloc.uuid);
+                        grille.push(pointToAdd);
+                    }
+                }
+            }
+
+            for (point of grille) {
+                const gradient = ctx.createLinearGradient(point.x * blocWidth, point.y * blocHeight, point.x * blocWidth + blocWidth, point.y * blocHeight + blocHeight); // Create gradient
+                gradient.addColorStop(0, 'rgb(48, 133, 48)'); // Start color
+                gradient.addColorStop(1, 'rgb(108, 184, 139)'); // End color
+
+                // Set the fill style to the gradient
+                ctx.fillStyle = gradient;
+                ctx.fillRect(point.x * blocWidth, point.y * blocHeight, blocWidth, blocHeight);
+
+
+            }
+        }
+
+        function rotateBloc() {
+            bloc.rotate();
+            updateGrid()
+        }
+
+
+
+        function checkRotateToNewPatternPossible(uuid, origine, points) {
+            for (point of points) {
+                let pointFound = grille.find(p => p.x === origine.x + point.x && p.y === origine.y + point.y);
+                if (origine.y + point.y < 0 || origine.y + point.y >= 20 || origine.x + point.x < 0 || origine.x + point.x >= 10 || (pointFound != undefined && pointFound.color !== null && pointFound.uuid !== uuid)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+
+        function checkAllPointsAvailable(bloc) {
+            for (point of bloc.form.currentPattern.points) {
+                let pointFound = grille.find(p => p.x === bloc.x + point.x && p.y === bloc.y + point.y + 1);
+                if (bloc.y + point.y + 1 >= 20 || (pointFound != undefined && pointFound.color !== null && pointFound.uuid !== bloc.uuid)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+
+
+        function moveBlock() {
+
+            let processMove = checkAllPointsAvailable(bloc);
+
+            if (processMove) {
+                bloc.changeOrigine(bloc.x, bloc.y + 1);
+            } else {
+                // there is an obstacle so we need to stop the bloc
+                bloc.setMoving(false);
+                checkIfLineComplete();
+                generateRandomBloc();
+            }
+        }
+
+
+
+
+
+        function checkIfLineComplete() {
+            for (let i = 0; i < 20; i++) {
+                let points = grille.filter(point => point.y === i);
+                if (points.length === 10) {
+                    linesCompleted.push(i);
+                }
+            }
+        }
+
+        function moveLinesAfterLineComplete(i) {
+            // length === 10 means that the line is complete
+            grille = grille.filter(point => point.y !== i);
+            for (point of grille) {
+                if (point.y < i) {
+                    point.y += 1;
+                }
+            }
+
+        }
+
+        function checkLost() {
+            let points = grille.filter(point => point.y === 0 && point.uuid !== bloc.uuid);
+            if (points.length > 0) {
+                return true;
+            }
+            return false;
+
+        }
+
+        function updateGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear pr!evious frame
+
+            if (bloc.moving === true) {
+                // delete the points of the bloc in the grid
+                grille = grille.filter(point => point.uuid !== bloc.uuid);
+                for (point of bloc.form.currentPattern.points) {
+                    if (bloc.x + point.x >= 0 && bloc.x + point.x < 10 && bloc.y + point.y >= 0 && bloc.y + point.y < 20) {
+                        let pointToAdd = new Point(bloc.x + point.x, bloc.y + point.y);
+                        pointToAdd.setColor(bloc.form.color);
+                        pointToAdd.setUUID(bloc.uuid);
+                        grille.push(pointToAdd);
+                    }
+                }
+            }
+
+            // manage completed lines
+            if (linesCompleted.length > 0) {
+                for (point of grille) {
+                    if (linesCompleted.includes(point.y)) {
+                        ctx.fillStyle = 'red'; // Use the point's color
+                        ctx.fillRect(point.x * blocWidth, point.y * blocHeight, blocWidth, blocHeight); // Draw the block 
+                    } else {
+                        drawPoint(point);
+                    }
+                }
+            } else {
+                for (point of grille) {
+                    drawPoint(point);
+                }
+            }
+        }
+
+        function drawPoint(point) {
+
+            const gradient = ctx.createLinearGradient(point.x * blocWidth, point.y * blocHeight, point.x * blocWidth + blocWidth, point.y * blocHeight + blocHeight); // Create gradient
+            useGradient(point.color, gradient);
+            ctx.fillStyle = gradient; // Use the point's color
+            ctx.fillRect(point.x * blocWidth, point.y * blocHeight, blocWidth, blocHeight); // Draw the block   
+
+        }
+
+        function drawGrid(grille) {
+            for (point of grille) {
+
+
+                const gradient = ctx.createLinearGradient(point.x * blocWidth, point.y * blocHeight, point.x * blocWidth + blocWidth, point.y * blocHeight + blocHeight); // Create gradient
+                useGradient(point.color, gradient);
+                ctx.fillStyle = gradient; // Use the point's color
+                ctx.fillRect(point.x * blocWidth, point.y * blocHeight, blocWidth, blocHeight); // Draw the block                ctx.fillRect(point.x * blocWidth, point.y * blocHeight, blocWidth, blocHeight); // Draw the block                ctx.fillRect(point.x * blocWidth, point.y * blocHeight, blocWidth, blocHeight); // Draw the block
+
+            }
+
+        }
+
+
+        function useGradient(color, gradient) {
+            switch (color) {
+                case 'red':
+                    redGradient(gradient);
+                    break;
+                case 'blue':
+                    blueGradient(gradient);
+                    break;
+                case 'green':
+                    greenGradient(gradient);
+                    break;
+                case 'yellow':
+                    yellowGradient(gradient);
+                    break;
+            }
+            return gradient;
+        }
+
+        function greenGradient(gradient) {
+            gradient.addColorStop(0, 'rgb(48, 133, 48)'); // Start color
+            gradient.addColorStop(1, 'rgb(108, 184, 139)'); // End color
+        }
+
+        function blueGradient(gradient) {
+            gradient.addColorStop(0, 'rgb(48, 48, 133)'); // Start color
+            gradient.addColorStop(1, 'rgb(108, 139, 184)'); // End color
+        }
+
+        function yellowGradient(gradient) {
+            gradient.addColorStop(0, 'rgb(133, 133, 48)'); // Start color
+            gradient.addColorStop(1, 'rgb(184, 184, 108)'); // End color
+        }
+
+        function redGradient(gradient) {
+            gradient.addColorStop(0, 'rgb(133, 48, 48)'); // Start color
+            gradient.addColorStop(1, 'rgb(184, 108, 108)'); // End color
+        }
+
+        function checkMoveRight() {
+
+            for (point of bloc.form.currentPattern.points) {
+                let pointFound = grille.find(p => p.x === bloc.x + point.x + 1 && p.y === bloc.y + point.y);
+                if (bloc.x + point.x + 1 >= 10 || (pointFound != undefined && pointFound.color !== null && pointFound.uuid !== bloc.uuid)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function checkMoveLeft() {
+
+            for (point of bloc.form.currentPattern.points) {
+                let pointFound = grille.find(p => p.x === bloc.x + point.x + -1 && p.y === bloc.y + point.y);
+                if (bloc.x + point.x - 1 < 0 || (pointFound != undefined && pointFound.color !== null && pointFound.uuid !== bloc.uuid)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function moveLeft() {
+            if (checkMoveLeft()) {
+                bloc.changeOrigine(bloc.x - 1, bloc.y);
+            }
+        }
+
+        function moveRight() {
+            if (checkMoveRight()) {
+                bloc.changeOrigine(bloc.x + 1, bloc.y);
+            }
+        }
+
+
+
+        // Function to update the game status message
+        function updateGameStatus(message) {
+            const gameStatus = document.getElementById('gameStatus');
+            gameStatus.textContent = message;
+        }
+
+
+        function accelerateTime() {
+            speed = 100;
+        }
+
+        function resetTime() {
+            speed = 1000;
+        }
+
+        // Function to animate and update the canvas
+        function animate(timestamp) {
+            if (checkLost() === false) {
+                if (timestamp !== undefined && stopanimation === false) {
+                    const deltaTime = timestamp - lastTime;
+                    lastTime = timestamp;
+
+
+                    timeSinceLastframe += deltaTime;
+                    // bouger le bloc toutes les 1000ms (speed)
+
+
+
+                    if (timeSinceLastframe > speed) {
+
+                        let processMove = checkAllPointsAvailable(bloc);
+
+                        if (processMove) {
+                            bloc.changeOrigine(bloc.x, bloc.y + 1);
+                        } else {
+                            // there is an obstacle so we need to stop the bloc
+                            collisionSound.play(); 
+
+                            bloc.setMoving(false);
+                            checkIfLineComplete();
+                            if (linesCompleted.length > 0) {
+                                timeSinceStartDeletion = 0;
+                                score+=linesCompleted.length;
+                                document.getElementById('score').textContent='Score : ' + score;
+                            }
+                            generateRandomBloc();
+
+
+                        }
+                        timeSinceLastframe = 0;
+
+                    }
+
+                    if (linesCompleted.length > 0) {
+                        if (timeSinceStartDeletion < timeDeletetion) {
+                            timeSinceStartDeletion += deltaTime;
+                        } else {
+                            for (i of linesCompleted) {
+                                moveLinesAfterLineComplete(i);
+                            }
+                            linesCompleted = [];
+                            timeSinceStartDeletion = 0;
+                        }
+
+                    }
+                    updateGrid();
+
+                }
+
+
+            } else {
+                updateGameStatus('You Lost!');
+                stopTimer();
+                stopanimation = true;
+            }
+            requestAnimationFrame(animate); // Call animate again to create a smooth loop
+
+        }
+
+        // Event listener for keydown to start movement
+        document.addEventListener('keydown', (e) => {
+
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+            if (e.code === 'Space') rotateBloc();
+            if (e.key === 'ArrowDown') accelerateTime();
+
+        });
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            stopTimer(); // Stop any existing timer
+            startTimer(); // Start a new timer
+            updateGameStatus('Playing');
+            document.getElementById('score').textContent='Score : 0';
+            document.getElementById('time').textContent='Time : 00:00';
+
+
+            stopanimation = false;
+            generateRandomBloc();
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+                timeSinceLastframe = 0;
+                timeSinceStartDeletion = 0;
+                lastTime = 0;
+                deltaTime = 0
+                linesCompleted = [];
+                grille = [];
+            }
+            updateGrid();
+
+            animationFrameId = requestAnimationFrame(animate);
+
+            // Remove focus from the button
+            document.activeElement.blur()
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown') resetTime();
+
+        });
+
+        updateGameStatus('Click on Start to play');
+    </script>
+     <div class="footer">
+        Developed by Thibaut B. - thiber90@gmail.com
+    </div>
+</body>
+
+</html>
