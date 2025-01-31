@@ -321,7 +321,7 @@
         }
 
         function checkLost() {
-            let points = grille.filter(point => point.y === 0 && point.uuid !== bloc.uuid);
+            let points = grille.filter(point => point.y === 0 && ((bloc.moving===true &&  point.uuid !== bloc.uuid) || bloc.moving===false));
             if (points.length > 0) {
                 return true;
             }
@@ -530,7 +530,9 @@
                                 score += linesCompleted.length;
                                 document.getElementById('score').textContent = 'Score : ' + score;
                             }
+                            if(checkLost()===false){
                             generateRandomBloc();
+                            }
 
 
                         }
