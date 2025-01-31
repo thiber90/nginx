@@ -20,6 +20,7 @@
             <div id="time">Time : 00:00</div>
             <br>
             <div id="score">Score : 0</div>
+
         </div>
     </div>
 
@@ -40,10 +41,11 @@
         const canvas = document.getElementById('myCanvas');
         const collisionSound = document.getElementById('collisionSound');
         const ctx = canvas.getContext('2d');
-        var speed = 1000;
+        var speed = 800;
+        var normalSpeed = 800;
         var timeSinceLastframe = 0;
         var timeSinceStartDeletion = 0;
-        var timeDeletetion = 1000;
+        var timeDeletetion = 200;
         var lastTime = 0;
         var deltaTime = 0
         let linesCompleted = [];
@@ -57,6 +59,8 @@
         let startTime;
         let timerInterval;
         let score = 0;
+        const speedUpInterval = 90000; 
+        var lastSpeedUp = 0;
 
 
         class Bloc {
@@ -461,13 +465,39 @@
             gameStatus.textContent = message;
         }
 
+        function getTimeMultiplier(){
+            let divider;
+            if (normalSpeed > 400){
+            divider=4;
+            } else {
+                divider=3;
+            }
+            return divider;
+        }
+
 
         function accelerateTime() {
-            speed = 100;
+            let divider = getTimeMultiplier();
+           
+            speed = normalSpeed / divider;
         }
 
         function resetTime() {
-            speed = 1000;
+            let multiplier = getTimeMultiplier();
+            speed = normalSpeed * multiplier;
+        }
+
+        function decreaseSpeed() {
+            if (Date.now() - lastSpeedUp > speedUpInterval && normalSpeed > 200) {
+                normalSpeed -= 100; // Ensure speed does not go below 100
+                lastSpeedUp = Date.now();
+
+            }
+            if (speed > normalSpeed) {
+                speed = normalSpeed;
+            } else if (speed < normalSpeed) {
+                accelerateTime();
+            }
         }
 
         // Function to animate and update the canvas
@@ -491,14 +521,14 @@
                             bloc.changeOrigine(bloc.x, bloc.y + 1);
                         } else {
                             // there is an obstacle so we need to stop the bloc
-                            collisionSound.play(); 
+                            collisionSound.play();
 
                             bloc.setMoving(false);
                             checkIfLineComplete();
                             if (linesCompleted.length > 0) {
                                 timeSinceStartDeletion = 0;
-                                score+=linesCompleted.length;
-                                document.getElementById('score').textContent='Score : ' + score;
+                                score += linesCompleted.length;
+                                document.getElementById('score').textContent = 'Score : ' + score;
                             }
                             generateRandomBloc();
 
@@ -530,6 +560,7 @@
                 stopTimer();
                 stopanimation = true;
             }
+            decreaseSpeed();
             requestAnimationFrame(animate); // Call animate again to create a smooth loop
 
         }
@@ -547,9 +578,12 @@
         document.getElementById('startButton').addEventListener('click', () => {
             stopTimer(); // Stop any existing timer
             startTimer(); // Start a new timer
+            lastSpeedUp = 0;
+            normalSpeed = 800;
+            speed = 800;
             updateGameStatus('Playing');
-            document.getElementById('score').textContent='Score : 0';
-            document.getElementById('time').textContent='Time : 00:00';
+            document.getElementById('score').textContent = 'Score : 0';
+            document.getElementById('time').textContent = 'Time : 00:00';
 
 
             stopanimation = false;
@@ -579,7 +613,7 @@
 
         updateGameStatus('Click on Start to play');
     </script>
-     <div class="footer">
+    <div class="footer">
         Developed by Thibaut B. - thiber90@gmail.com
     </div>
 </body>
