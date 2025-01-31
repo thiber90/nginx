@@ -220,7 +220,7 @@
                     } else if (ball.x <= brick.x + brickWidth + ball.radius && ball.x >= brick.x + brickWidth && ball.y <= brick.y + brickHeight && ball.y >= brick.y) {
                         collisionDetected = true;
                         ball.direction = ball.direction === 'positive' ? 'negative' : 'positive';
-                    } else if (ball.x >= brick.x && ball.x <= brick.x + brickWidth && ball.y <= brick.y && ball.y >= brick.y + ball.radius) {
+                    } else if (ball.x >= brick.x && ball.x <= brick.x + brickWidth && ball.y <= brick.y && ball.y >= brick.y - ball.radius) {
                         collisionDetected = true;
                     }
 
