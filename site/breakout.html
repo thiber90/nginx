@@ -214,7 +214,7 @@
                 if (brick.active === true) {
                     if (ball.x >= brick.x && ball.x <= brick.x + brickWidth && ball.y <= brick.y + brickHeight + ball.radius && ball.y >= brick.y + brickHeight) {
                         collisionDetected = true;
-                    } else if (ball.x >= brick.x - ball.radius && ball.x <= brick.x + brickWidth && ball.y <= brick.y + brickHeight && ball.y >= brick.y) {
+                    } else if (ball.x >= brick.x - ball.radius && ball.x <= brick.x  && ball.y <= brick.y + brickHeight && ball.y >= brick.y) {
                         collisionDetected = true;
                         ball.direction = ball.direction === 'positive' ? 'negative' : 'positive';
                     } else if (ball.x <= brick.x + brickWidth + ball.radius && ball.x >= brick.x + brickWidth && ball.y <= brick.y + brickHeight && ball.y >= brick.y) {
