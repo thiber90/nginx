@@ -4,8 +4,8 @@ table {
     border-collapse: collapse;
 }
 td {
-    height: 75px;
-    width: 75px;
+    height: 65px;
+    width: 65px;
 }
 
 table, th, td {
