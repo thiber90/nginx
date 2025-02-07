@@ -11,7 +11,7 @@
 <body>
     <h1>Tetris</h1>
     <div class="container">
-        <canvas id="myCanvas" width="350" height="700"></canvas>
+        <canvas id="myCanvas" width="320" height="640"></canvas>
 
         <div id="wordsPanel">
             <p><b>Instructions :</b> Use the Left/Right arrow keys to move the falling Tetriminos. Down arrow will speed
@@ -51,8 +51,8 @@
         let linesCompleted = [];
         let stopanimation = true;
         let animationFrameId;
-        const blocWidth = 35;
-        const blocHeight = 35;
+        const blocWidth = 32;
+        const blocHeight = 32;
         const colors = ['red', 'blue', 'green', 'yellow'];
         let bloc;
         let grille = [];
