@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Rotate Imperfect Rectangle</title>
+    <link rel="stylesheet" type="text/css" href="paint.css">
+    <script src="minTextInput.js"></script>
+
+</head>
+
+<body>
+
+    <h1>Paint</h1>
+    <br>
+    <div id="dashboardPanel">
+       
+        <div class="menu-text">Selection :</div> <!-- Add text here -->
+
+        <button class="menu-button" id="selectionMode">
+            <img src="selection.svg" alt="Selection Mode">
+        </button>
+        <div class="menu-text">Creation :</div>
+
+        <button class="menu-button" id="freeDrawingMode">
+            <img src="freecreation.svg" alt="Free Drawing Mode">
+        </button>
+        <button class="menu-button" id="createRectangle">
+            <img src="rectcreation.svg" alt="Create Rectangle">
+        </button>
+        <button class="menu-button" id="createText">
+            <img src="textcreation.svg" alt="Create Text">
+        </button>
+        <button class="menu-button" id="createCircle">
+            <img src="circlecreation.svg" alt="Create Circle">
+        </button>
+        <button class="menu-button" id="createLine">
+            <img src="linecreation.svg" alt="Create Line">
+        </button>
+        <button class="menu-button" id="createTriangle">
+            <img src="trianglecreation.svg" alt="Create Triangle">
+        </button>
+
+        <div class="menu-text">Scale :</div> <!-- Add text here -->
+        <button class="menu-button" id="increaseScale">
+            <img src="scaleup.svg" alt="Increase Scale">
+        </button>
+        <button class="menu-button" id="decreaseScale">
+            <img src="scaledown.svg" alt="Decrease Scale">
+        </button>
+        <div class="menu-text">Layer :</div> <!-- Add text here -->
+
+        <button class="menu-button" id="bringForward">
+            <img src="bringforward.svg" alt="Bring Forward">
+        </button>
+        <button class="menu-button" id="bringBackward">
+            <img src="bringbackward.svg" alt="Bring Backward">
+        </button>
+        <div class="menu-text">Fill</div> <!-- Add text here -->
+
+        <button class="menu-button" id="fillColorButton">
+            <img src="fillcolor.svg" alt="Fill Color">
+        </button>
+        <div class="menu-text">Border :</div> <!-- Add text here -->
+
+        <button class="menu-button" id="borderWidthButton">
+            <img src="borderwidth.svg" alt="Border Width">
+        </button>
+        <button class="menu-button" id="borderColorButton">
+            <img src="bordercolor.svg" alt="Border Color">
+        </button>
+        <div class="menu-text">Text :</div> <!-- Add text here -->
+
+        <button class="menu-button" id="fontColorButton">
+            <img src="textcolor.svg" alt="Font Color">
+        </button>
+        <button class="menu-button" id="fontFamilyButton">
+            <img src="font.svg" alt="Font Family">
+        </button>
+        </button>
+        <div class="menu-text">Delete :</div> <!-- Add text here -->
+
+        <button class="menu-button" id="deleteButton">
+            <img src="delete.svg" alt="Delete">
+        </button>
+    </div>
+
+    <div id="fillColorPanel" class="color-panel">
+        <!-- Color boxes for fill color selection -->
+    </div>
+    <div id="borderColorPanel" class="color-panel">
+        <!-- Color boxes for border color selection -->
+    </div>
+    <div id="fontColorPanel" class="color-panel">
+        <!-- Color boxes for font color selection -->
+    </div>
+    <div id="borderWidthPanel" class="value-panel">
+        <!-- Value boxes for border width selection -->
+    </div>
+    <div id="fontFamilyPanel" class="value-panel">
+        <!-- Value boxes for font family selection -->
+    </div>
+    <br>
+    <canvas id="myCanvas" width="1244" height="700" style="border:1px solid #000000;"></canvas>
+    <br>
+    <div class="button-container">
+        <button id="clearButton">Clear</button>
+        <button id="saveButton">Save</button>
+    </div>
+    <script>
+
+        var rotatingForm = false;
+        var translatingForm = false;
+        var movingPoint = false;
+        var selectionMode = false;
+        var creationMode = false;
+        var creationType;
+        var creating = false;
+        var textInput;
+        var originCreation;
+        var freeDrawingMode = true;
+        var freeDrawingPoints = [];
+        var freeDrawing = false;
+        var pointThatIsMoving;
+        var originRotationPoint;
+        var forms = [];
+        var selectedForm;
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        var timeSinceLastframe = 0;
+        var lastTime = 0;
+        const fps = 1;
+
+        const colors = ['#000000', '#800000', '#808000', '#008000', '#800080', '#808080', '#C0C0C0', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
+
+        const fontFamilies = ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Verdana', 'Trebuchet MS', 'Comic Sans MS', 'Impact', 'Lucida Console', 'Tahoma'];
+
+        function createColorBoxes(panelId, colorType) {
+            const panel = document.getElementById(panelId);
+
+            // Add "no color" option
+            if (colorType !== 'font') {
+                const noColorBox = document.createElement('div');
+                noColorBox.className = 'color-box no-color';
+                noColorBox.style.backgroundColor = 'transparent';
+                noColorBox.addEventListener('click', () => {
+                    if (colorType === 'fill') {
+                        document.getElementById('fillColorButton').dataset.color = 'none';
+                        document.getElementById('fillColorButton').style.backgroundColor = 'lightgray';
+                        if (selectedForm != undefined) {
+                            selectedForm.fillColor = undefined;
+                        }
+                    } else if (colorType === 'border') {
+                        document.getElementById('borderColorButton').dataset.color = 'transparent';
+                        document.getElementById('borderColorButton').style.backgroundColor = 'lightgray';
+                        if (selectedForm != undefined) {
+                            selectedForm.borderColor = 'transparent';
+                        }
+                    }
+                    panel.style.display = 'none';
+                });
+                panel.appendChild(noColorBox);
+            }
+
+            colors.forEach(color => {
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-box';
+                colorBox.style.backgroundColor = color;
+                colorBox.addEventListener('click', () => {
+                    if (colorType === 'fill') {
+                        document.getElementById('fillColorButton').dataset.color = color;
+                        document.getElementById('fillColorButton').style.backgroundColor = color;
+                        if (selectedForm != undefined) {
+                            selectedForm.fillColor = color;
+                        }
+                    } else if (colorType === 'border') {
+                        document.getElementById('borderColorButton').dataset.color = color;
+                        document.getElementById('borderColorButton').style.backgroundColor = color;
+                        if (selectedForm != undefined) {
+                            selectedForm.borderColor = color;
+                        }
+                    } else if (colorType === 'font') {
+                        document.getElementById('fontColorButton').dataset.color = color;
+                        document.getElementById('fontColorButton').style.backgroundColor = color;
+                        if (selectedForm != undefined && selectedForm.type === 'text') {
+                            selectedForm.fillColor = color;
+                        }
+                    }
+
+                    panel.style.display = 'none';
+                });
+                panel.appendChild(colorBox);
+            });
+        }
+
+        function createValueBoxes(panelId, values, valueType) {
+            const panel = document.getElementById(panelId);
+            values.forEach(value => {
+                const valueBox = document.createElement('div');
+                valueBox.className = 'value-box';
+                valueBox.textContent = value;
+                if (valueType === 'fontFamily') {
+                    valueBox.style.fontFamily = value;  // Correct way to set the font
+
+                }
+                valueBox.width = 'auto';
+                valueBox.addEventListener('click', () => {
+                    // Handle value selection
+                    if (valueType === 'borderWidth') {
+                        document.getElementById('borderWidthButton').dataset.width = value;
+
+                        if (selectedForm != undefined) {
+                            selectedForm.borderWidth = value;
+                            updateSelection(selectedForm);
+                        }
+                    } else if (valueType === 'fontFamily') {
+                        document.getElementById('fontFamilyButton').dataset.font = value;
+                        if (selectedForm != undefined) {
+
+                            selectedForm.font = value;
+                            resetTextFormParameters(selectedForm);
+                            updateSelection(selectedForm);
+                        }
+                    }
+
+                    panel.style.display = 'none';
+                });
+                panel.appendChild(valueBox);
+            });
+        }
+        function togglePanel(panelId, buttonId) {
+            const panel = document.getElementById(panelId);
+            const button = document.getElementById(buttonId);
+            const rect = button.getBoundingClientRect();
+            panel.style.top = `${rect.bottom + window.scrollY}px`;
+            panel.style.left = `${rect.left + window.scrollX}px`;
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        }
+
+        document.getElementById('fillColorButton').addEventListener('click', () => togglePanel('fillColorPanel', 'fillColorButton'));
+        document.getElementById('borderColorButton').addEventListener('click', () => togglePanel('borderColorPanel', 'borderColorButton'));
+        document.getElementById('fontColorButton').addEventListener('click', () => togglePanel('fontColorPanel', 'fontColorButton'));
+        document.getElementById('borderWidthButton').addEventListener('click', () => togglePanel('borderWidthPanel', 'borderWidthButton'));
+        document.getElementById('fontFamilyButton').addEventListener('click', () => togglePanel('fontFamilyPanel', 'fontFamilyButton'));
+
+        createColorBoxes('fillColorPanel', 'fill');
+        createColorBoxes('borderColorPanel', 'border');
+        createColorBoxes('fontColorPanel', 'font');
+        createValueBoxes('borderWidthPanel', Array.from({ length: 10 }, (_, i) => i + 1), 'borderWidth');
+        createValueBoxes('fontFamilyPanel', fontFamilies, 'fontFamily');
+
+
+
+        class Form {
+
+            associatedPointIndex;
+
+
+            constructor(id, points, borderColor, borderWidth, fillColor, inMotion, type, layer) {
+                this.id = id;
+                this.points = points;
+                this.borderColor = borderColor;
+                this.borderWidth = borderWidth;
+                this.fillColor = fillColor;
+                this.inMotion = inMotion;
+                this.type = type;
+                this.layer = layer;
+            }
+            cloneInMotion() {
+
+                const pointsCopy = this.points.map(point => ({ x: point.x, y: point.y }));
+
+                // Return a new instance of Form with the same properties
+                return new Form(this.id, pointsCopy, this.borderColor, this.borderWidth, this.fillColor, true, this.type, this.layer);
+            }
+        }
+
+        class Ellipse extends Form {
+            constructor(id, center, a, b, angle, borderColor, borderWidth, fillColor, inMotion, type, layer) {
+                super(id, [center], borderColor, borderWidth, fillColor, inMotion, type, layer);
+                this.a = a;
+                this.b = b;
+                this.angle = angle;
+            }
+
+            // Method to clone the Ellipse object while setting inMotion to true
+            cloneInMotion() {
+                const centerCopy = { x: this.points[0].x, y: this.points[0].y };
+                return new Ellipse(this.id, centerCopy, this.a, this.b, this.angle, this.borderColor, this.borderWidth, this.fillColor, true, this.type, this.layer);
+            }
+        }
+        class Text extends Form {
+            constructor(id, origin, content, a, b, angle, font, size, fillColor, inMotion, type, layer) {
+                super(id, [origin], null, null, fillColor, inMotion, type, layer);
+                this.content = content;
+                this.a = a;
+                this.b = b;
+                this.angle = angle;
+                this.font = font;
+                this.size = size;
+            }
+
+            // Method to clone the Ellipse object while setting inMotion to true
+            cloneInMotion() {
+                const originCopy = { x: this.points[0].x, y: this.points[0].y };
+                return new Text(this.id, originCopy, this.content, this.a, this.b, this.angle, this.font, this.size, this.fillColor, true, this.type, this.layer);
+            }
+
+        }
+
+        function calculateAngleBetweenLines(origin, point1, point2) {
+            // Calculate the vectors
+            const vectorA = { x: point1.x - origin.x, y: point1.y - origin.y };
+            const vectorB = { x: point2.x - origin.x, y: point2.y - origin.y };
+
+            // Calculate the angle using atan2
+            const angleA = Math.atan2(vectorA.y, vectorA.x);
+            const angleB = Math.atan2(vectorB.y, vectorB.x);
+
+            // Calculate the difference in angles
+            let angleRadians = angleB - angleA;
+
+            // Convert the angle to degrees
+            let angleDegrees = angleRadians * (180 / Math.PI);
+
+            // Adjust the angle to be in the range [0, 360]
+            if (angleDegrees < 0) {
+                angleDegrees += 360;
+            }
+
+            return angleDegrees;
+        }
+        // Function to calculate the rotated coordinates of a point
+        function rotatePoint(cx, cy, x, y, angle) {
+            const radians = angle * Math.PI / 180;
+            const cos = Math.cos(radians);
+            const sin = Math.sin(radians);
+            const nx = cos * (x - cx) - sin * (y - cy) + cx;
+            const ny = sin * (x - cx) + cos * (y - cy) + cy;
+            return { x: Math.round(nx), y: Math.round(ny) };
+        }
+
+        function rotateForm(form, angle, center) {
+            if (form.type === 'ellipse') {
+                form.angle = form.angle + angle * Math.PI / 180;
+            } else if (form.type === 'text') {
+                form.angle = form.angle + angle * Math.PI / 180;
+                let newCenter = rotatePoint(form.points[0].x, form.points[0].y, center.x, center.y, angle);
+                let dx = newCenter.x - center.x;
+                let dy = newCenter.y - center.y;
+                form.points[0] = { x: form.points[0].x - dx, y: form.points[0].y - dy };
+                // we need to recalculate the position of the origin
+                //form.points[0]= rotatePoint(center.x, center.y, form.points[0].x, form.points[0].y, angle);
+            } else {
+                const center = getMiddlePoint(form);
+                const cx = center.x;
+                const cy = center.y;
+                const rotatedPoints = form.points.map(point => rotatePoint(cx, cy, point.x, point.y, angle));
+                form.points = rotatedPoints;
+            }
+        }
+
+        function translateForm(form, deltaX, deltaY) {
+            const translatedPoints = form.points.map(point => translatePoint(point.x, point.y, deltaX, deltaY));
+            form.points = translatedPoints;
+        }
+
+        function translatePoint(x, y, deltaX, deltaY) {
+            return { x: x + deltaX, y: y + deltaY };
+        }
+
+        function getMaxLayer() {
+            if (forms.length !== 0) {
+                return Math.max(...forms.map(form => form.layer));
+            }
+            return 0;
+        }
+
+        function bringFormBackward(formToChange) {
+            if (formToChange.layer > 1) {
+                let formActualLayer = formToChange.layer;
+                // on change la layer de la couche layer-1
+                let otherFormToMove = forms.find(form => form.layer === formActualLayer - 1);
+                otherFormToMove.layer = otherFormToMove.layer + 1;
+                formToChange.layer = formActualLayer - 1;
+            }
+        }
+
+        function bringFormForward(formToChange) {
+            if (formToChange.layer < getMaxLayer()) {
+                let formActualLayer = formToChange.layer;
+                // on change la layer de la couche layer+1
+                let otherFormToMove = forms.find(form => form.layer === formActualLayer + 1);
+                otherFormToMove.layer = otherFormToMove.layer - 1;
+                formToChange.layer = formActualLayer + 1;
+            }
+        }
+
+
+        // Function to get the coordinates of the mouse pointer
+        function getMouseCoordinates(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            return { x, y };
+        }
+
+
+        function handleMouseUp(event) {
+            const fillColor = document.getElementById('fillColorButton').dataset.color;
+            const borderColor = document.getElementById('borderColorButton').dataset.color;
+            const borderWidth = document.getElementById('borderWidthButton').dataset.width;
+
+            if (creationMode && creationType !== 'text') {
+                let formCreated = forms.find(form => form.inMotion === true);
+                formCreated.inMotion = false;
+                formCreated.id = generateFormId();
+                formCreated.borderColor = borderColor;
+                formCreated.borderWidth = borderWidth;
+                formCreated.fillColor = fillColor === 'none' ? null : fillColor;
+                resetVariables();
+                selectionMode = true;
+
+                updateSelection(formCreated);
+            }
+            if (rotatingForm || translatingForm || movingPoint) {
+                originRotationPoint = null;
+                pointThatIsMoving = null;
+                rotatingForm = false;
+                movingPoint = false;
+                translatingForm = false;
+                let formRotated = forms.find(form => form.inMotion === true);
+                formRotated.inMotion = false;
+
+                // Filter the forms array to remove the form with the same id as formRotated
+                forms = forms.filter(form => form.id !== formRotated.id);
+                forms.push(formRotated);
+                updateSelection(formRotated);
+            } else if (freeDrawing) {
+                freeDrawing = false;
+                transformFreeDrawingPointsInForm();
+                freeDrawingPoints = [];
+            }
+        }
+
+
+
+        // Function to handle mousemove event
+        function handleMouseMove(event) {
+            handleFormRotation(event);
+            handleFormTranslation(event);
+            handlePointMoving(event);
+            handleFreeDrawing(event);
+            handleCreation(event);
+        }
+
+        function handleCreation(event) {
+            if (creating) {
+                const { offsetX, offsetY } = event;
+
+                if (creationType === 'rect') {
+                    handleRectangleCreation({ x: offsetX, y: offsetY });
+                } else if (creationType === 'circle') {
+                    handleCircleCreation({ x: offsetX, y: offsetY });
+
+                } else if (creationType === 'line') {
+                    handleLineCreation({ x: offsetX, y: offsetY });
+
+                } else if (creationType === 'triangle') {
+                    handleTriangleCreation({ x: offsetX, y: offsetY });
+
+                }
+            }
+        }
+
+        function handleTextCreation(point) {
+            textInput = new MinTextInput({
+                canvas: document.getElementById('myCanvas'),
+                x: point.x,
+                y: point.y,
+                // TODO put the font that has been selected
+                font: '16px ' + fontFamilyButton.dataset.font,
+                onsubmit: function (input) {
+                    // You can add the text input to your forms array or handle it as needed
+                    let textMeasurement = measureTextUsingDOM(input.text, input.font);
+                    let newForm = new Text(generateFormId(), { x: input.x, y: input.y }, input.text, textMeasurement.width, textMeasurement.height, 0, fontFamilyButton.dataset.font || 'Arial', 16, fontColorButton.dataset.color, false, 'text', getMaxLayer() + 1);
+                    forms.push(newForm);
+                    resetVariables();
+                    selectionMode = true;
+
+                    updateSelection(newForm);
+                }
+            });
+        }
+
+        function handleTriangleCreation(point) {
+            let distance = calculateDistanceBetweenPoints(originCreation, point);
+            let firstPoint = { x: originCreation.x, y: originCreation.y - distance };
+            let secondPoint = rotatePoint(originCreation.x, originCreation.y, firstPoint.x, firstPoint.y, 120);
+            let thirdPoint = rotatePoint(originCreation.x, originCreation.y, secondPoint.x, secondPoint.y, 120);
+
+            let points = [firstPoint, secondPoint, thirdPoint];
+
+            forms = forms.filter(form => form.inMotion === false);
+            forms.push(new Form(null, points, null, null, null, true, 'poly', getMaxLayer() + 1));
+        }
+
+        function handleLineCreation(point) {
+            let points = [{ x: originCreation.x, y: originCreation.y }, { x: point.x, y: point.y }]
+            forms = forms.filter(form => form.inMotion === false);
+            forms.push(new Form(null, points, null, null, null, true, 'poly', getMaxLayer() + 1));
+        }
+
+
+        function handleCircleCreation(point) {
+            let distance = calculateDistanceBetweenPoints(originCreation, point);
+            forms = forms.filter(form => form.inMotion === false);
+            forms.push(new Ellipse(null, originCreation, distance, distance, 0, null, null, null, true, 'ellipse', getMaxLayer() + 1));
+        }
+
+        function handleRectangleCreation(point) {
+            let points = [{ x: originCreation.x, y: originCreation.y }, { x: point.x, y: originCreation.y }, { x: point.x, y: point.y }, { x: originCreation.x, y: point.y }]
+            forms = forms.filter(form => form.inMotion === false);
+            forms.push(new Form(null, points, null, null, null, true, 'poly', getMaxLayer() + 1));
+        }
+
+        function handleFreeDrawing(event) {
+            if (freeDrawing) {
+                const { offsetX, offsetY } = event;
+                if (freeDrawingPoints.find(point => point.x === offsetX && point.y === offsetY) === undefined) {
+                    freeDrawingPoints.push({ x: offsetX, y: offsetY });
+                }
+
+            }
+
+        }
+
+        function isPointInEllipse(x, y, form) {
+            let relativeX = x - form.points[0].x;
+            let relativeY = y - form.points[0].y;
+            return Math.pow(relativeX, 2) / Math.pow(form.a, 2) + Math.pow(relativeY, 2) / Math.pow(form.b, 2) <= 1;
+        }
+
+        // Function to detect if a point is within a form (polygon)
+        // ray-casting algorithm
+        // if the point is within the polygon then it crosses the polygon's border an odd number of times
+        function isPointInForm(x, y, form) {
+            let inside = false;
+            const points = form.points;
+            // si on passe 2 borders, alors on est à l'extérieur, impair = à l'intérieur
+            for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+                const xi = points[i].x, yi = points[i].y;
+                const xj = points[j].x, yj = points[j].y;
+
+                const intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+
+        function filterFormsWithoutSelection(forms) {
+            return forms.filter(form => form.id != 'selection' && form.id != 'selectionCenter' && form.id != 'selectionPoint');
+        }
+
+
+        function handleMouseDown(event) {
+            handleSelectionMode(event);
+            handleFreeDrawingMode(event);
+            handleCreationMode(event);
+
+        }
+
+        function handleCreationMode(event) {
+            if (creationMode) {
+                const { offsetX, offsetY } = event;
+                originCreation = { x: offsetX, y: offsetY };
+                fontFamilyButton.disabled = true;
+                fontFamilyButton.classList.add('disabled');
+                fontColorButton.disabled = true;
+                fontColorButton.classList.add('disabled');
+                if (creationType === 'text' && creating == false) {
+                    handleTextCreation(originCreation);
+                }
+                creating = true;
+            }
+
+        }
+
+        function handleFreeDrawingMode(event) {
+            if (freeDrawingMode) {
+                freeDrawing = true;
+            }
+        }
+
+        function handleSelectionMode(event) {
+            if (selectionMode) {
+                const { offsetX, offsetY } = event;
+
+                let selectedPolyForm = handlePolyFormSelection(event);
+                let selectedEllipseForm = handleEllipseFormSelection(event);
+                let selectedFreeForm = handleFreeFormSelection(event);
+                let selectedTextForm = handleTextSelection(event);
+                let chosenSelectedForm;
+                let potentialSelectedForms = [selectedPolyForm, selectedEllipseForm, selectedFreeForm, selectedTextForm].filter(form => form != undefined);
+
+                if (potentialSelectedForms != undefined && potentialSelectedForms.length > 0) {
+                    potentialSelectedForms = potentialSelectedForms.sort((a, b) => b.layer - a.layer);
+                    chosenSelectedForm = potentialSelectedForms[0];
+                }
+
+                let selectedCenterSelectionForm = handleSelectionCenterSelection(event);
+                let selectedSelectionPointForm = handleSelectionPointSelection(event);
+
+                if (selectedCenterSelectionForm !== undefined) {
+                    translatingForm = true;
+                } else if (selectedSelectionPointForm != undefined) {
+                    movingPoint = true;
+                    pointThatIsMoving = selectedSelectionPointForm.associatedPointIndex;
+                } else if (chosenSelectedForm != undefined && selectedForm != chosenSelectedForm) {
+                    updateSelection(chosenSelectedForm);
+
+                } else if (chosenSelectedForm != undefined && selectedForm === chosenSelectedForm) {
+                    rotatingForm = true;
+                    originRotationPoint = { x: offsetX, y: offsetY };
+                } else if (chosenSelectedForm == undefined) {
+                    selectedForm = undefined;
+                    resetVariables()
+                    selectionMode = true;
+                    updateMenuStatuses();
+                }
+
+            }
+        }
+
+        function handleEllipseFormSelection(event) {
+            const { offsetX, offsetY } = event;
+            let ellipseForms = forms.filter(form => form.type === 'ellipse');
+            if (ellipseForms.length != 0) {
+                let selectedEllipses = ellipseForms.filter(form => isPointInEllipse(offsetX, offsetY, form));
+                // TODO gérer les layers
+                if (selectedEllipses.length != 0) {
+                    return selectedEllipses.sort((a, b) => b.layer - a.layer)[0];
+                }
+            }
+
+            return undefined;
+        }
+
+        function handleSelectionCenterSelection(event) {
+            const { offsetX, offsetY } = event;
+            let centerSelectionForm = forms.find(form => form.id === 'selectionCenter');
+            if (centerSelectionForm != undefined && isPointInForm(offsetX, offsetY, centerSelectionForm)) {
+                return centerSelectionForm;
+            }
+            return undefined;
+            //return single
+        }
+
+
+        function handleSelectionPointSelection(event) {
+            const { offsetX, offsetY } = event;
+            let selectionPointForms = forms.filter(form => form.id === 'selectionPoint');
+            if (selectionPointForms.length != 0) {
+                let selectedPoints = selectionPointForms.filter(form => isPointInForm(offsetX, offsetY, form));
+                return selectedPoints[0];
+            }
+            return undefined;
+            //return single
+
+        }
+
+
+        function handlePolyFormSelection(event) {
+            const { offsetX, offsetY } = event;
+            let polyForms = forms.filter(form => form.type === 'poly');
+            // Filter forms that contain the point
+            let selectedPolyForms = polyForms.filter(form => isPointInForm(offsetX, offsetY, form));
+
+            // Include lines that are near the point
+            const lineForms = polyForms.filter(form => form.points.length == 2 && isPointNearLine({ x: offsetX, y: offsetY }, form.points[0], form.points[1], 20));
+            selectedPolyForms = selectedPolyForms.concat(lineForms);
+
+            // TODO : ne pas remonter une liste mais la form avec la layer la plus élevée (celle qui est le plus au premier plan)
+            if (selectedPolyForms.length != 0) {
+                return selectedPolyForms.sort((a, b) => b.layer - a.layer)[0];
+            }
+            return undefined;
+
+        }
+
+        function getSelectionPointsForTextForm(form) {
+            return [{ x: form.points[0].x, y: form.points[0].y },
+            { x: form.points[0].x + form.a * Math.cos(form.angle), y: form.points[0].y + form.a * Math.sin(form.angle) },
+            {
+                x: form.points[0].x + form.a * Math.cos(form.angle) + form.b * Math.sin(form.angle), y: form.points[0].y + form.a * Math.sin(form.angle)
+                    - form.b * Math.cos(form.angle)
+            },
+            { x: form.points[0].x + form.b * Math.sin(form.angle), y: form.points[0].y - form.b * Math.cos(form.angle) }
+            ]
+        }
+
+        function handleTextSelection(event) {
+            const { offsetX, offsetY } = event;
+            let textForms = forms.filter(form => form.type === 'text');
+            let selectedTextForms = textForms.filter(form => isPointInForm(offsetX, offsetY, new Form(null, getSelectionPointsForTextForm(form), null, null, null, null, null, null)));
+            if (selectedTextForms.length != 0) {
+                return selectedTextForms.sort((a, b) => b.layer - a.layer)[0];
+            }
+            return undefined;
+        }
+
+        function handleFreeFormSelection(event) {
+            const { offsetX, offsetY } = event;
+            let freeForms = forms.filter(form => form.type === 'free');
+            let selectedFreeForm = [];
+            for (form of freeForms) {
+                if (form.points.find(point => calculateDistanceBetweenPoints(point, { x: offsetX, y: offsetY }) < 40) != undefined) {
+                    selectedFreeForm.push(form);
+                }
+            }
+            if (selectedFreeForm.length != 0) {
+                return selectedFreeForm.sort((a, b) => b.layer - a.layer)[0];
+            }
+            return undefined;
+        }
+
+        function calculateDistanceBetweenPoints(point1, point2) {
+            return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+        }
+
+
+        function isPointNearLine(pointToDetermine, point1, point2, maxDistance) {
+            // Calculate A, B, and C for the line equation Ax + By + C = 0
+            const A = point2.y - point1.y;
+            const B = point1.x - point2.x;
+            const C = point2.x * point1.y - point1.x * point2.y;
+
+            // Calculate the distance from the point (x0, y0) to the line
+            const distance = Math.abs(A * pointToDetermine.x + B * pointToDetermine.y + C) / Math.sqrt(A * A + B * B);
+
+            // Check if the distance is within the specified maximum distance
+            if (distance > maxDistance) {
+                return false;
+            }
+
+            // Check if the point is within the bounds of the line segment
+            const dotProduct = (pointToDetermine.x - point1.x) * (point2.x - point1.x) + (pointToDetermine.y - point1.y) * (point2.y - point1.y);
+            if (dotProduct < 0) {
+                return false;
+            }
+
+            const squaredLength = (point2.x - point1.x) * (point2.x - point1.x) + (point2.y - point1.y) * (point2.y - point1.y);
+            if (dotProduct > squaredLength) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function updateSelection(newSelectForm) {
+            selectedForm = newSelectForm;
+            forms = filterFormsWithoutSelection(forms);
+            if (newSelectForm != undefined) {
+
+                if (newSelectForm.type === 'ellipse') {
+                    createSelectionFormsForEllipse();
+                } else if (newSelectForm.type === 'text') {
+                    createSelectionFormsForText();
+                } else {
+                    createSelectionForms();
+
+                }
+            }
+
+            updateMenuStatuses();
+        }
+
+        function scaleForm(form, scaleFactor) {
+            if (form.type === 'ellipse') {
+                form.a = form.a * scaleFactor;
+                form.b = form.b * scaleFactor;
+
+            } else if (form.type === 'text') {
+                if (scaleFactor === 1.10) {
+                    form.size += 1;
+                }
+                else if (scaleFactor === 0.90) {
+                    form.size += -1;
+                }
+            } else {
+                // Calculate the center of the polygon
+                const centerX = form.points.reduce((sum, point) => sum + point.x, 0) / form.points.length;
+                const centerY = form.points.reduce((sum, point) => sum + point.y, 0) / form.points.length;
+                let center = getMiddlePoint(form);
+
+                // Scale each point relative to the center
+                const scaledPoints = form.points.map(point => {
+                    return {
+                        x: center.x + (point.x - center.x) * scaleFactor,
+                        y: center.y + (point.y - center.y) * scaleFactor
+                    };
+                });
+                form.points = scaledPoints;
+            }
+        }
+
+
+
+        function getCardinalPointsForEllipse(form) {
+
+            const points = [
+                { x: form.points[0].x + form.a * Math.cos(form.angle), y: form.points[0].y + form.a * Math.sin(form.angle) },
+                { x: form.points[0].x + form.b * (-1) * Math.sin(form.angle), y: form.points[0].y + form.b * Math.cos(form.angle) },
+                { x: form.points[0].x + form.a * (-1) * Math.cos(form.angle), y: form.points[0].y + form.a * (-1) * Math.sin(form.angle) },
+                { x: form.points[0].x + form.b * Math.sin(form.angle), y: form.points[0].y + form.b * (-1) * Math.cos(form.angle) }
+            ];
+            return points;
+        }
+
+        function getSelectionForm(form) {
+            const maxX = Math.max(...form.points.map(point => point.x));
+            const minX = Math.min(...form.points.map(point => point.x));
+            const maxY = Math.max(...form.points.map(point => point.y));
+            const minY = Math.min(...form.points.map(point => point.y));
+            const points = [
+                { x: minX, y: minY },
+                { x: minX, y: maxY },
+                { x: maxX, y: maxY },
+                { x: maxX, y: minY }
+            ];
+
+            return new Form('selection', points, null, null, null, false, null, null);
+
+
+        }
+
+        function getMiddlePoint(form) {
+            const centerX = form.points.reduce((sum, point) => sum + point.x, 0) / form.points.length;
+            const centerY = form.points.reduce((sum, point) => sum + point.y, 0) / form.points.length;
+            return { x: centerX, y: centerY };
+        }
+
+        function draw() {
+            drawForms();
+            drawSelection();
+            drawFreeDrawingPoints();
+            drawTextInput();
+        }
+
+        function drawTextInput() {
+            if (textInput !== undefined) {
+                textInput.draw();
+            }
+        }
+
+        function drawForms() {
+            forms.filter(form => form.id !== 'selection' && form.id !== 'selectionCenter' && form.id !== 'selectionPoint').sort((a, b) => a.layer - b.layer).forEach(form => {
+
+                switch (form.type) {
+                    case 'free':
+                        drawPoly(form, false);
+                        break;
+                    case 'poly':
+                        drawPoly(form, true);
+                        break;
+                    case 'ellipse':
+                        drawEllipse(form);
+                        break;
+                    case 'text':
+                        drawText(form);
+                }
+
+
+            });
+        }
+
+        function drawEllipse(form) {
+            if (form.points !== undefined && form.points.length !== 0 && form.a !== undefined && form.b !== undefined) {
+                ctx.save(); // Save the current context state
+                ctx.beginPath();
+                ctx.ellipse(form.points[0].x, form.points[0].y, form.a, form.b, form.angle, 0, 2 * Math.PI);
+                if (form.inMotion) {
+                    ctx.globalAlpha = 0.3;
+                    ctx.setLineDash([5, 5]);
+                    ctx.fillStyle = 'rgba(0, 0, 0)';
+                    ctx.lineWidth = form.borderWidth;
+                    ctx.strokeStyle = 'rgba(0, 0, 0)';
+                    ctx.fill();
+
+                } else {
+                    if (form.fillColor != undefined) {
+                        ctx.fillStyle = form.fillColor;
+                        ctx.fill();
+                    }
+                    ctx.strokeStyle = form.borderColor;
+                    ctx.lineWidth = form.borderWidth;
+                }
+
+                ctx.stroke();
+                ctx.restore(); // Restore the context to its original state
+            }
+        }
+
+        function drawPoly(form, connectLastDot) {
+            if (form.points != undefined && form.points.length != 0) {
+                ctx.save(); // Save the current context state
+                ctx.beginPath();
+                ctx.moveTo(form.points[0].x, form.points[0].y);
+                for (let i = 1; i < form.points.length; i++) {
+                    ctx.lineTo(form.points[i].x, form.points[i].y);
+                }
+                if (connectLastDot || (form.type == 'poly' && form.points.length > 2)) {
+                    ctx.closePath();
+                }
+                if (form.inMotion) {
+                    ctx.globalAlpha = 0.3;
+                    ctx.setLineDash([5, 5]);
+                    if (form.type != 'free') {
+                        ctx.setfillStyle = 'rgba(0, 0, 0)';
+                        ctx.fill();
+                    }
+                    ctx.lineWidth = form.borderWidth;
+                    ctx.strokeStyle = 'rgba(0, 0, 0)';
+                    ctx.stroke();
+
+                } else {
+                    if (form.fillColor != null) {
+                        ctx.fillStyle = form.fillColor;
+                        ctx.fill();
+                    }
+
+                    ctx.strokeStyle = form.borderColor;
+                    ctx.lineWidth = form.borderWidth;
+                    ctx.stroke();
+                }
+                ctx.restore(); // Restore the context to its original state
+            }
+        }
+
+        function drawFreeDrawingPoints() {
+            if (freeDrawingPoints.length !== 0) {
+                ctx.save()
+                ctx.globalAlpha = 1;
+                ctx.setfillStyle = 'rgba(0, 0, 0)';
+
+                for (point of freeDrawingPoints) {
+                    ctx.fillRect(point.x, point.y, 1, 1);
+                }
+                ctx.restore(); // Restore the context to its original state
+            }
+        }
+
+        function drawSelection() {
+            let selectionForm = forms.find(form => form.id === 'selection');
+            if (selectionForm != undefined) {
+                ctx.save(); // Save the current context state
+                ctx.beginPath();
+                ctx.moveTo(selectionForm.points[0].x, selectionForm.points[0].y);
+                for (let i = 1; i < selectionForm.points.length; i++) {
+                    ctx.lineTo(selectionForm.points[i].x, selectionForm.points[i].y);
+                }
+                ctx.closePath();
+                ctx.globalAlpha = 0.3;
+                ctx.setLineDash([5, 5]);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(0, 0, 0)';
+                ctx.stroke();
+                ctx.restore(); // Restore the context to its original state
+
+                drawCircle(getMiddlePoint(selectionForm), 5, 'red', 'red', 1);
+                // draw selection points
+                let selectionPoints = forms.filter(form => form.id === 'selectionPoint');
+                for (form of selectionPoints) {
+                    drawCircle(getMiddlePoint(form), 5, 'red', 'red', 1);
+                }
+
+            }
+        }
+
+
+        function createSelectionFormsForText() {
+            let cornerPoints = getSelectionPointsForTextForm(selectedForm);
+            let selectionForm = new Form('selection', cornerPoints, null, null, null, false, null, null);
+            forms.push(selectionForm);
+            forms.push(new Form('selectionCenter', createCarre(getMiddlePoint(selectionForm), 10), null, null, null, null, null, null));
+        }
+
+
+        function createSelectionFormsForEllipse() {
+
+            let selectionPoints = getCardinalPointsForEllipse(selectedForm);
+            let pointsForSelectionForm = getSelectionFormPointsForEllipse(selectedForm, selectionPoints);
+
+            forms.push(new Form('selection', pointsForSelectionForm, null, null, null, false, null, null));
+
+            forms.push(new Form('selectionCenter', createCarre(selectedForm.points[0], 10), null, null, null, null, null, null));
+            for (i = 0; i < selectionPoints.length; i++) {
+                let newSelectionPointForm = new Form('selectionPoint', createCarre(selectionPoints[i], 10), null, null, null, null, null, null);
+                newSelectionPointForm.associatedPointIndex = i;
+                forms.push(newSelectionPointForm);
+            }
+
+        }
+
+        function getSelectionFormPointsForEllipse(form, cardinalPoints) {
+            let selectionFormPoints = [];
+            for (i = 0; i < 4; i++) {
+                selectionFormPoints.push({ x: cardinalPoints[i].x + cardinalPoints[(i + 1) % 4].x - form.points[0].x, y: cardinalPoints[i].y + cardinalPoints[(i + 1) % 4].y - form.points[0].y });
+            }
+            return selectionFormPoints;
+        }
+
+        function createSelectionForms() {
+            let selectionForm = getSelectionForm(selectedForm);
+            forms.push(selectionForm);
+            forms.push(new Form('selectionCenter', createCarre(getMiddlePoint(selectionForm), 10), null, null, null, null, null, null));
+            if (selectedForm.type === 'poly') {
+                // selection points
+                for (point of selectedForm.points) {
+                    let newSelectionPointForm = new Form('selectionPoint', createCarre(point, 10), null, null, null, null, null, null);
+                    newSelectionPointForm.associatedPointIndex = selectedForm.points.findIndex(p => p.x === point.x && p.y === point.y);
+                    forms.push(newSelectionPointForm);
+                }
+            }
+        }
+
+        function createCarre(origin, width) {
+            let points = [{ x: origin.x - width / 2, y: origin.y - width / 2 }, { x: origin.x + width / 2, y: origin.y - width / 2 }, { x: origin.x + width / 2, y: origin.y + width / 2 }, { x: origin.x - width / 2, y: origin.y + width / 2 }];
+            return points;
+        }
+
+        function transformFreeDrawingPointsInForm() {
+            let pointsToAdd = [];
+            for (let i = 0; i < freeDrawingPoints.length; i++) {
+                if (i % 4 === 0) {
+                    pointsToAdd.push(freeDrawingPoints[i]);
+                }
+            }
+            const borderColor = document.getElementById('borderColorButton').dataset.color;
+            const borderWidth = document.getElementById('borderWidthButton').dataset.width;
+            let formCreated = new Form(generateFormId(), pointsToAdd, borderColor, borderWidth, null, false, 'free', getMaxLayer() + 1);
+            forms.push(formCreated);
+            resetVariables();
+            selectionMode = true;
+            updateSelection(formCreated);
+        }
+
+
+        function generateFormId() {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let id = '';
+            for (let i = 0; i < 8; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                id += characters[randomIndex];
+            }
+            return id;
+        }
+
+        function handleFormRotation(event) {
+            if (rotatingForm) {
+                let center;
+                const { offsetX, offsetY } = event;
+                forms = forms.filter(form => form.inMotion !== true);
+                if (selectedForm.type === 'ellipse') {
+                    center = selectedForm.points[0];
+
+                } else if (selectedForm.type === 'text') {
+                    center = getMiddlePoint(new Form(null, getSelectionPointsForTextForm(selectedForm), null, null, null, false, null, null));
+
+                } else {
+                    center = getMiddlePoint(selectedForm);
+                }
+                const cx = center.x;
+                const cy = center.y;
+                const angle = calculateAngleBetweenLines({ x: cx, y: cy }, { x: originRotationPoint.x, y: originRotationPoint.y }, { x: offsetX, y: offsetY });
+                let newForm = selectedForm.cloneInMotion();
+                rotateForm(newForm, angle, center);
+                forms.push(newForm);
+            }
+        }
+
+        function handlePointMoving(event) {
+            if (movingPoint) {
+                forms = forms.filter(form => form.inMotion !== true);
+                const { offsetX, offsetY } = event;
+                let newForm = selectedForm.cloneInMotion();
+                if (selectedForm.type === 'ellipse') {
+                    forms = forms.filter(form => form.inMotion !== true);
+                    const { offsetX, offsetY } = event;
+                    let distance = calculateDistanceBetweenPoints(selectedForm.points[0], { x: offsetX, y: offsetY });
+
+                    if (pointThatIsMoving % 2 === 1) {
+                        newForm.b = distance;
+                    } else {
+                        newForm.a = distance;
+                    }
+                } else {
+
+                    newForm.points[pointThatIsMoving].x = offsetX;
+                    newForm.points[pointThatIsMoving].y = offsetY;
+                }
+                forms.push(newForm);
+
+            }
+        }
+
+
+        function handleFormTranslation(event) {
+            if (translatingForm) {
+                const { offsetX, offsetY } = event;
+                forms = forms.filter(form => form.inMotion !== true);
+                let origin;
+                if (selectedForm.type === 'ellipse') {
+                    origin = selectedForm.points[0];
+                } else {
+                    origin = getMiddlePoint(forms.find(form => form.id === 'selection'));
+                }
+                const deltaX = offsetX - origin.x;
+                const deltaY = offsetY - origin.y;
+                let newForm = selectedForm.cloneInMotion();
+                translateForm(newForm, deltaX, deltaY);
+                forms.push(newForm);
+            }
+        }
+
+        function drawText(form) {
+            if (form.points !== undefined && form.points.length !== 0) {
+                ctx.save(); // Save the current context state
+
+                ctx.translate(form.points[0].x, form.points[0].y); // Move the canvas origin to the center
+
+                ctx.rotate(form.angle); // Rotate the canvas by the specified angle (in radians)
+                ctx.translate(-form.points[0].x, -form.points[0].y); // Move the canvas origin back to the top-left corner
+
+                ctx.font = form.size + 'px ' + form.font; // Set the font
+                if (form.inMotion) {
+                    ctx.globalAlpha = 0.3;
+                }
+                ctx.fillStyle = form.fillColor; // Set the fill color
+                ctx.textAlign = 'start'; // Set the text alignment
+                ctx.fillText(form.content, form.points[0].x, form.points[0].y); // Draw the text
+                ctx.restore(); // Restore the context to its original state
+            }
+        }
+
+
+
+        // for the selection points and center
+        function drawCircle(origin, radius, fillColor, borderColor, borderWidth) {
+            ctx.save(); // Save the current context state
+            ctx.beginPath();
+            ctx.arc(origin.x, origin.y, radius, 0, 2 * Math.PI); // Draw the circle
+            ctx.fillStyle = fillColor; // Set the fill color
+            ctx.fill(); // Fill the circle
+            ctx.lineWidth = borderWidth; // Set the border width
+            ctx.strokeStyle = borderColor; // Set the border color
+            ctx.stroke(); // Draw the border
+            ctx.restore(); // Restore the context to its original state
+        }
+
+        function measureTextUsingDOM(text, font) {
+            // Create a temporary span element
+            const span = document.createElement('span');
+            span.style.font = font;
+            span.style.position = 'absolute';
+            span.style.whiteSpace = 'nowrap';
+            span.style.visibility = 'hidden';
+            span.textContent = text;
+
+            // Append the span to the body
+            document.body.appendChild(span);
+
+            // Get the dimensions of the text
+            const rect = span.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            // Remove the span from the body
+            document.body.removeChild(span);
+
+            return { width, height };
+        }
+
+
+        function resetVariables() {
+            textInput = undefined;
+            rotatingForm = false;
+            translatingForm = false;
+            movingPoint = false;
+            selectionMode = false;
+            creationMode = false;
+            creationType = undefined;
+            creating = false;
+            originCreation = undefined;
+            freeDrawingMode = false;
+            freeDrawingPoints = [];
+            freeDrawing = false;
+            pointThatIsMoving = undefined;
+            originRotationPoint = undefined;
+            selectedForm = undefined;
+            forms = forms.filter(form => form.id !== 'selection' && form.id !== 'selectionCenter' && form.id !== 'selectionPoint');
+        }
+
+        function resetTextFormParameters(form) {
+            let textMeasurement = measureTextUsingDOM(form.content, form.size + 'px ' + form.font);
+            form.a = textMeasurement.width;
+            form.b = textMeasurement.height;
+        }
+
+        function handleIncreaseScaleButton(event) {
+            if (selectedForm != undefined) {
+                scaleForm(selectedForm, 1.10);
+            }
+            if (selectedForm.type === 'text') {
+                resetTextFormParameters(selectedForm);
+            }
+            updateSelection(selectedForm);
+
+        }
+        function handleDecreaseScaleButton(event) {
+            if (selectedForm != undefined) {
+                scaleForm(selectedForm, 0.90);
+            }
+            if (selectedForm.type === 'text') {
+                resetTextFormParameters(selectedForm);
+            }
+            updateSelection(selectedForm);
+        }
+
+        function handleFreeDrawingModeButton(event) {
+            if (freeDrawingMode === false) {
+                resetVariables();
+                freeDrawingMode = true;
+            }
+            updateMenuStatuses()
+        }
+
+        function handleSelectionModeButton(event) {
+            if (selectionMode === false) {
+                resetVariables();
+                selectionMode = true;
+            }
+            updateMenuStatuses();
+        }
+
+        function handleCreationModeButton(event) {
+            resetVariables();
+            creationMode = true;
+            const buttonId = event.currentTarget.id;
+            if (buttonId === 'createRectangle') {
+                creationType = 'rect';
+            } else if (buttonId === 'createText') {
+                creationType = 'text';
+            } else if (buttonId === 'createCircle') {
+                creationType = 'circle';
+            } else if (buttonId === 'createLine') {
+                creationType = 'line';
+            } else if (buttonId === 'createTriangle') {
+                creationType = 'triangle';
+            }
+
+            updateMenuStatuses();
+        }
+
+        function handleBringForwardEvent(event) {
+            bringFormForward(selectedForm);
+
+        }
+
+        function handleBringBackwardEvent(event) {
+            bringFormBackward(selectedForm);
+        }
+
+        function handleClearAction(event) {
+            forms = [];
+            resetVariables();
+            initButtons();
+        }
+
+        function handleDelete() {
+            if (selectedForm) {
+                forms = forms.filter(form => form.id !== selectedForm.id);
+                updateSelection(undefined);
+                updateMenuStatuses();
+
+            }
+        }
+
+        function exportCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            updateSelection(undefined);
+            draw();
+            let image = canvas.toDataURL("image/png");  // Convert to PNG data URL
+            ctx.fillStyle = undefined;
+
+            let link = document.createElement("a");
+            link.href = image;
+            link.download = "canvas-image.png";  // File name
+            link.click();
+        }
+
+        function updateMenuStatuses() {
+            const elements = {
+                fillColor: 'fillColorButton',
+                borderColor: 'borderColorButton',
+                borderWidth: 'borderWidthButton',
+                fontFamily: 'fontFamilyButton',
+                fontColor: 'fontColorButton',
+                increaseScale: 'increaseScale',
+                decreaseScale: 'decreaseScale',
+                bringBackward: 'bringBackward',
+                bringForward: 'bringForward',
+                deleteButton: 'deleteButton'
+            };
+
+            function setDisabledState(ids, state) {
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    el.disabled = state;
+                    el.classList.toggle('disabled', state);
+                });
+            }
+
+            function setButtonColor(buttonId, color) {
+                const button = document.getElementById(buttonId);
+                button.style.backgroundColor = color || 'none';
+                button.dataset.color = color || 'none';
+            }
+
+            // Enable all buttons by default
+            setDisabledState(Object.values(elements), false);
+
+            // Reset active class for mode buttons
+            ['createText', 'freeDrawingMode', 'selectionMode', 'createRectangle', 'createCircle', 'createLine', 'createTriangle'].forEach(id => {
+                document.getElementById(id).classList.remove('active');
+            });
+
+            if (selectionMode) {
+                document.getElementById('selectionMode').classList.add('active');
+                if (selectedForm) {
+                    switch (selectedForm.type) {
+                        case 'poly':
+                        case 'ellipse':
+                            setDisabledState([elements.fontFamily, elements.fontColor], true);
+                            if (selectedForm.points.length === 2) setDisabledState([elements.fillColor], true);
+                            setButtonColor(elements.borderColor, selectedForm.borderColor);
+                            setButtonColor(elements.fillColor, selectedForm.fillColor);
+                            document.getElementById(elements.borderWidth).dataset.width = selectedForm.borderWidth;
+                            break;
+                        case 'text':
+                            setDisabledState([elements.fillColor, elements.borderColor, elements.borderWidth], true);
+                            document.getElementById(elements.fontFamily).dataset.font = selectedForm.font;
+                            setButtonColor(elements.fontColor, selectedForm.fillColor);
+                            break;
+                        case 'free':
+                            setDisabledState([elements.fillColor, elements.fontFamily, elements.fontColor], true);
+                            setButtonColor(elements.borderColor, selectedForm.borderColor);
+                            document.getElementById(elements.borderWidth).dataset.width = selectedForm.borderWidth;
+                            break;
+                    }
+                } else {
+                    setDisabledState(Object.values(elements), true);
+                }
+            }
+
+            if (creationMode) {
+                updateActiveButtonWithCreationType(creationType);
+                switch (creationType) {
+                    case 'rect':
+                    case 'circle':
+                    case 'triangle':
+                        setDisabledState([elements.fontFamily, elements.fontColor], true);
+                        setButtonColor(elements.borderColor, '#000000');
+                        document.getElementById(elements.borderWidth).dataset.width = '2';
+                        break;
+                    case 'line':
+                        setDisabledState([elements.fillColor, elements.fontFamily, elements.fontColor], true);
+                        setButtonColor(elements.borderColor, '#000000');
+                        document.getElementById(elements.borderWidth).dataset.width = '2';
+                        break;
+                    case 'text':
+                        setDisabledState([elements.fillColor, elements.borderColor, elements.borderWidth], true);
+                        document.getElementById(elements.fontFamily).dataset.font = 'Arial';
+                        setButtonColor(elements.fontColor, '#000000');
+                        break;
+                }
+                setDisabledState([elements.increaseScale, elements.decreaseScale, elements.bringBackward, elements.bringForward, elements.deleteButton], true);
+            }
+
+            if (freeDrawingMode) {
+                document.getElementById('freeDrawingMode').classList.add('active');
+                setDisabledState([elements.fillColor, elements.fontFamily, elements.fontColor], true);
+                setButtonColor(elements.borderColor, '#000000');
+                document.getElementById(elements.borderWidth).dataset.width = '2';
+                setDisabledState([elements.increaseScale, elements.decreaseScale, elements.bringBackward, elements.bringForward, elements.deleteButton], true);
+            }
+        }
+
+        function initButtons() {
+            // Get references to the UI elements
+            const fillColorButton = document.getElementById('fillColorButton');
+            const borderColorButton = document.getElementById('borderColorButton');
+            const borderWidthButton = document.getElementById('borderWidthButton');
+            const fontFamilyButton = document.getElementById('fontFamilyButton');
+            const fontColorButton = document.getElementById('fontColorButton');
+            const increaseScaleButton = document.getElementById('increaseScale');
+            const decreaseScaleButton = document.getElementById('decreaseScale');
+            const bringBackward = document.getElementById('bringBackward');
+            const bringForward = document.getElementById('bringForward');
+            const deleteButton = document.getElementById('deleteButton');
+
+
+            // Reset all elements to be enabled
+            fillColorButton.disabled = true;
+            borderColorButton.disabled = true;
+            borderWidthButton.disabled = true;
+            fontFamilyButton.disabled = true;
+            fontColorButton.disabled = true;
+            increaseScaleButton.disabled = true;
+            decreaseScaleButton.disabled = true;
+            bringBackward.disabled = true;
+            bringForward.disabled = true;
+            deleteButton.disabled = true;
+
+            fillColorButton.classList.add('disabled');
+            borderColorButton.classList.add('disabled');
+            borderWidthButton.classList.add('disabled');
+            fontFamilyButton.classList.add('disabled');
+            fontColorButton.classList.add('disabled');
+            increaseScaleButton.classList.add('disabled');
+            decreaseScaleButton.classList.add('disabled');
+            bringBackward.classList.add('disabled');
+            bringForward.classList.add('disabled');
+            deleteButton.classList.add('disabled');
+
+
+        }
+
+        function updateActiveButtonWithCreationType(creationType) {
+            document.getElementById('freeDrawingMode').classList.remove('active');
+            document.getElementById('selectionMode').classList.remove('active');
+            document.getElementById('createRectangle').classList.remove('active');
+            document.getElementById('createCircle').classList.remove('active');
+            document.getElementById('createLine').classList.remove('active');
+            document.getElementById('createText').classList.remove('active');
+            document.getElementById('createTriangle').classList.remove('active');
+            switch (creationType) {
+                case 'rect':
+                    document.getElementById('createRectangle').classList.add('active');
+                    break;
+                case 'circle':
+                    document.getElementById('createCircle').classList.add('active');
+                    break;
+                case 'triangle':
+                    document.getElementById('createTriangle').classList.add('active');
+                    break;
+                case 'line':
+                    document.getElementById('createLine').classList.add('active');
+                    break;
+                case 'text':
+                    document.getElementById('createText').classList.add('active');
+                    break;
+            }
+        }
+        // listeners
+        // Add event listeners to the canvas
+        // Add event listeners to the canvas
+        // Add event listeners to the canvas
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        document.getElementById('increaseScale').addEventListener('mousedown', handleIncreaseScaleButton);
+        document.getElementById('decreaseScale').addEventListener('mousedown', handleDecreaseScaleButton);
+        document.getElementById('freeDrawingMode').addEventListener('mousedown', handleFreeDrawingModeButton);
+        document.getElementById('selectionMode').addEventListener('mousedown', handleSelectionModeButton);
+        document.getElementById('createRectangle').addEventListener('mousedown', handleCreationModeButton);
+        document.getElementById('createCircle').addEventListener('mousedown', handleCreationModeButton);
+        document.getElementById('createLine').addEventListener('mousedown', handleCreationModeButton);
+        document.getElementById('createText').addEventListener('mousedown', handleCreationModeButton);
+        document.getElementById('createTriangle').addEventListener('mousedown', handleCreationModeButton);
+        document.getElementById('bringForward').addEventListener('mousedown', handleBringForwardEvent);
+        document.getElementById('bringBackward').addEventListener('mousedown', handleBringBackwardEvent);
+        document.getElementById('deleteButton').addEventListener('mousedown', handleDelete);
+
+
+
+        document.getElementById('clearButton').addEventListener('mousedown', handleClearAction);
+        document.getElementById('saveButton').addEventListener('mousedown', exportCanvas);
+
+
+
+
+        // Function to animate and update the canvas
+        function animate(timestamp) {
+
+            if (timestamp !== undefined) {
+                const deltaTime = timestamp - lastTime;
+                lastTime = timestamp;
+
+
+                timeSinceLastframe += deltaTime;
+                // bouger le bloc toutes les 1000ms (speed)
+
+
+
+                if (timeSinceLastframe > (1 / fps) * 1000) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+
+                    draw();
+                }
+
+
+                requestAnimationFrame(animate); // Call animate again to create a smooth loop
+            }
+        }
+        initButtons();
+        requestAnimationFrame(animate); // Call animate again to create a smooth loop
+
+    </script>
+    <div class="footer">
+        Developed by Thibaut B. - thiber90@gmail.com
+    </div>
+</body>
+
+</html>
