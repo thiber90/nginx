@@ -45,7 +45,17 @@
       const name = document.getElementById("name").value;
       const password = document.getElementById("password").value;
       const word = document.getElementById("word").value;
+      if(name === "" || word === "" || password === ""){
+          const missing = [];
 
+        if (!name) missing.push("name");
+        if (!password) missing.push("password");
+        if (!word) missing.push("word");
+
+        document.getElementById("messageDisplay").innerText = `Missing required fields: ${missing.join(", ")}`;
+        return;
+
+      }
       try {
         // Fetch the game by name
         const existingGame = await getGameByName(name);
@@ -76,5 +86,8 @@
       window.location.href = "index.html"; // Redirect to index.html on cancel
     });
   </script>
+  <div class="footer">
+    Developed by Thibaut B. - thiber90@gmail.com
+  </div>
 </body>
 </html>

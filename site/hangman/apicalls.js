@@ -1,5 +1,5 @@
 //const API_BASE_URL = "http://localhost:8080"; 
-const API_BASE_URL = "https://hangman-api-production-120c.up.railway.app"; 
+const API_BASE_URL = "https://soothing-clarity-production.up.railway.app"; 
 
 
 async function createGame(gameData) {
