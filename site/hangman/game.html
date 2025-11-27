@@ -85,9 +85,7 @@ window.addEventListener('DOMContentLoaded', () => {
       updateGameStatus("LOST");
       disableInput();
       return;
-    } else {
-      document.getElementById("messageDisplay").innerText = `Game is ongoing. Good luck!`;
-    }
+    } 
   }
 
   async function updateGameStatus(newStatus) {
@@ -184,6 +182,9 @@ window.addEventListener('DOMContentLoaded', () => {
       game = await window.getGameByName(gameName);
       verifyPassword(game);
       if (authentified) {
+        if(game.status === "ACTIVE") {
+        document.getElementById("messageDisplay").innerText = `Game is ongoing. Good luck!`;
+        } 
         refreshWordDisplay();
         startPolling();
       }
