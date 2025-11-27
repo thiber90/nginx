@@ -13,9 +13,9 @@
     <br>
       <div id="container">
       <div id=mainGameContainer>
-        <p id="wordDisplay"></p>
+        <p id="wordDisplay"><h2>Word to find :</h2></p>
         <br>
-        <div id="word"></div>
+        <div id="word">&nbsp;</div>
         <br><br>
         <div id="inputContainer">
           <label for="letterInput">Enter a letter:</label>
@@ -69,7 +69,6 @@ window.addEventListener('DOMContentLoaded', () => {
   async function refreshWordDisplay() {
     game = await window.getGameByName(gameName);
     const wordDisplay = formatWord(game.word, game.attempts);
-    document.getElementById("wordDisplay").innerHTML = `<h2>Word to find :</h2>`;
     document.getElementById("word").innerText = wordDisplay;
     displayHangmanPicture(getNumberOfWrongAttempts());
     checkIfGameEnded();

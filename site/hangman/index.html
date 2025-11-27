@@ -16,6 +16,7 @@
         </table>
     </div>
     <br>
+    <div id="containerMessage"> </div>
     <div id="pageNavigator"></div>
 
     <br>
@@ -50,7 +51,7 @@
         table.innerHTML = ""; // Clear existing content
 
           if (!games || games.length === 0) {
-            document.getElementById("container").innerText = "No games found.";
+            document.getElementById("containerMessage").innerText = "No games found.";
             return;
           }
  
@@ -125,7 +126,7 @@
         games = await fetchGames(); // await the promise so games is the actual array
       } catch (err) {
         console.error("Failed to load games:", err);
-        document.getElementById("container").innerText = "Failed to load games.";
+        document.getElementById("containerMessage").innerText = "Failed to load games.";
         return;
       }
 
