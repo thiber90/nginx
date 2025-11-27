@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hangman Games</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="apicalls.js" defer></script>
+</head>
+<body>
+    <h1 id="title"></h1>
+    <p>This is a classic hangman game. Find the hidden word by guessing one letter at a time. You have a limited number of 6 incorrect guesses before the game is over.
+    </p>
+    <br>
+      <div id="container">
+      <div id=mainGameContainer>
+        <p id="wordDisplay"></p>
+        <div id="word"></div>
+        <div id="inputContainer">
+          <label for="letterInput">Enter a letter:</label>
+          <input type="text" id="letterInput" name="letterInput" maxlength="1" pattern="[A-Z]" required>
+          <button type="button" id="tryButton">Try</button>
+        </div>        
+      </div>
+      <div id="hangmanPictureContainer"></div>
+      <div id="attemptsDisplay"></div>
+    </div>
+    <br>
+    <p id="messageDisplay"></p>
+    <br>
+    <button type="button" id="cancelButton">Go to games</button>
+
+
+
+<script>
+// Ensure code runs after apicalls.js is loaded
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const gameName = params.get('name');
+  const gamePassword = params.get('password');
+  var game;
+  let authentified = false;
+  let pollingInterval;
+
+  function verifyPassword(game) {
+    if (game.password !== gamePassword) {
+      alert("Incorrect password. Please try again.");
+      return;
+    } else {
+      authentified = true;
+    }
+  }
+
+  function formatWord(word, attempts) {
+    const triedLetters = attempts.map(a => a.letter.toUpperCase());
+    return word.split('').map(letter => (triedLetters.includes(letter.toUpperCase()) || word[0]===letter || word[word.length - 1]===letter ? letter : '_')).join('  ');
+  }
+
+  function isCharacterAlreadyTried(letter) {
+    const triedLetters = game.attempts.map(a => a.letter.toUpperCase());
+    return triedLetters.includes(letter.toUpperCase()) || game.word[0] === letter || game.word[game.word.length - 1] === letter;
+  }
+
+  function getCharacterStatus(letter, word) {
+    return word.includes(letter) ? "CORRECT" : "WRONG";
+  }
+
+  async function refreshWordDisplay() {
+    game = await window.getGameByName(gameName);
+    const wordDisplay = formatWord(game.word, game.attempts);
+    document.getElementById("wordDisplay").innerHTML = `<h2>Word to find :</h2>`;
+    document.getElementById("word").innerText = wordDisplay;
+    displayHangmanPicture(getNumberOfWrongAttempts());
+    checkIfGameEnded();
+    displayAttempts();
+  }
+
+  function checkIfGameEnded() {
+    const wordDisplay = formatWord(game.word, game.attempts).replace(/ /g, '');
+    if (wordDisplay.toUpperCase() === game.word.toUpperCase()) {
+      updateGameStatus("WON");
+      disableInput();
+      return;
+    } else if (getNumberOfWrongAttempts() >= 6) {
+      updateGameStatus("LOST");
+      disableInput();
+      return;
+    } else {
+      document.getElementById("messageDisplay").innerText = `Game is ongoing. Good luck!`;
+    }
+  }
+
+  async function updateGameStatus(newStatus) {
+    if(game.status != newStatus){
+      if(newStatus==='LOST'){
+        document.getElementById("messageDisplay").innerText = `You lost. The word was: ${game.word}`;
+      } else {
+        document.getElementById("messageDisplay").innerText = `Congratulations! You've won!`;
+      }
+      game.status = newStatus;
+      await window.updateGame(game.idga, game);
+    } else {
+        document.getElementById("messageDisplay").innerText = `The game is ${newStatus}.`;
+    }
+  }
+
+  function getNumberOfWrongAttempts(){
+    let numberOfWrongAttempts = 0;
+    game.attempts.forEach(element => {
+      if(element.status === "WRONG"){
+        numberOfWrongAttempts++;
+      }
+    });
+    return numberOfWrongAttempts;
+  }
+
+  function getHangmanPictureSrc(step) {
+    return `hangman_step_${step}.svg`;
+  }
+
+  function displayHangmanPicture(step) {
+    let img = document.getElementById("hangmanPicture");
+    let container = document.getElementById("hangmanPictureContainer");
+    if (!img) {
+      img = document.createElement("img");
+      img.id = "hangmanPicture";
+      container.appendChild(img);
+    }
+    img.src = getHangmanPictureSrc(step);
+    img.alt = `Hangman step ${step}`;
+  }
+
+  function displayAttempts() {
+    let attemptsDiv = document.getElementById("attemptsDisplay");
+    if (!attemptsDiv) {
+      attemptsDiv = document.createElement("div");
+      attemptsDiv.id = "attemptsDisplay";
+      // Always append to #container for flex styling
+      let container = document.getElementById("container");
+      container.appendChild(attemptsDiv);
+    } else {
+      // If already in DOM, ensure it's inside #container
+      let container = document.getElementById("container");
+      if (attemptsDiv.parentNode !== container) {
+        container.appendChild(attemptsDiv);
+      }
+    }
+    let html = `<h2>Attempts:</h2>`;
+    html += `<table><thead><tr><th>Letter</th><th>Date</th></tr></thead><tbody>`;
+    game.attempts.forEach(attempt => {
+      const rowClass = attempt.status === "CORRECT" ? "ok" : (attempt.status === "WRONG" ? "wrong" : "");
+      html += `<tr class="${rowClass}"><td>${attempt.letter}</td><td>${new Date(attempt.dateCre).toLocaleString()}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    attemptsDiv.innerHTML = html;
+  }
+
+  async function pollGame() {
+    if (authentified) {
+      await refreshWordDisplay();
+    }
+  }
+
+  function startPolling() {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(() => {
+      pollGame();
+    }, 3000);
+  }
+
+  function stopPolling() {
+    clearInterval(pollingInterval);
+  }
+
+  function disableInput() {
+    document.getElementById("letterInput").disabled = true;
+    document.getElementById("tryButton").disabled = true;
+    stopPolling();
+  }
+
+  async function main() {
+    document.getElementById("title").innerText = `Game: ${gameName}`;
+    try {
+      game = await window.getGameByName(gameName);
+      verifyPassword(game);
+      if (authentified) {
+        refreshWordDisplay();
+        startPolling();
+      }
+    } catch (error) {
+      alert("Failed to load game: " + error.message);
+    }
+  }
+
+  main();
+
+  document.getElementById("cancelButton").addEventListener("click", () => {
+    window.location.href = "index.html";
+  });
+
+  document.getElementById("tryButton").addEventListener("click", async () => {
+    const letter = document.getElementById("letterInput").value;
+    if (letter.length !== 1) {
+      alert("Please enter a single letter.");
+      return;
+    }
+    if (isCharacterAlreadyTried(letter)) {
+      document.getElementById("messageDisplay").innerText = `This letter has already been tried. Please choose another letter.`;
+    } else {
+      const attemptObj = {
+        letter: letter,
+        status: getCharacterStatus(letter, game.word),
+        dateCre: new Date().toISOString()
+      };
+      await window.createAttempt(game.idga, attemptObj);
+      refreshWordDisplay();
+    }
+    document.getElementById("letterInput").value = '';
+  });
+
+  document.getElementById("letterInput").addEventListener("input", function() {
+    this.value = this.value.toUpperCase();
+  });
+});
+  </script>
+  <div class="footer">
+    Developed by Thibaut B. - thiber90@gmail.com
+  </div>
+</body>
+</html>

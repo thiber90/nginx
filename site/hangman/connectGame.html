@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hangman Games</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="apicalls.js" defer></script>
+</head>
+<body>
+    <h1 id="title"></h1>  
+    <br>
+    <div id="createGameContainer">
+    <form id="createGameForm">
+    <label for="name">Name:</label>
+    <input type="text" id="name" maxlength="25" name="name" disabled><br><br>
+
+    <label for="password">Password:</label>
+    <input type="text" id="password" name="password" maxlength="25" required><br><br>
+    </form>
+      </div>
+      <br>  
+        <p id="messageDisplay"></p>
+  <br>  <br>
+    <div id="buttonContainer">
+    <button type="button" id="connectButton">Connect</button>
+    <button type="button" id="cancelButton">Cancel</button>
+    </div>
+  <br>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const gameName = params.get('name');
+
+document.getElementById("title").innerText = `Connect to game ${gameName}`;
+document.getElementById("name").value = gameName; // Populate the disabled name field
+
+document.getElementById("connectButton").addEventListener("click", async () => {
+      const password = document.getElementById("password").value;
+
+      try {
+        // Fetch the game by name
+        const game = await getGameByName(gameName);
+
+        if (game == null) {
+          alert(`No game with the name "${name}"is found.`);
+          return;
+        }
+
+       if (game.password !== password) {
+          document.getElementById("messageDisplay").innerText = `Incorrect password. Please try again.`;
+          return;
+        }
+
+        window.location.href = `game.html?name=${gameName}&password=${password}`; // Redirect to game.html on success
+      } catch (error) {
+        // TODO show the error in a error bar
+        alert("Failed to connect to games: " + error.message);
+      }
+    });
+
+  // ensure that the game passed as parameter exists
+  window.addEventListener('DOMContentLoaded', () => {
+      getGameByName(gameName).then(game => {
+        if (game == null) {
+          alert(`No game with the name "${gameName}" is found.`);
+          window.location.href = "index.html"; // Redirect to index.html if game not found
+        }
+      }).catch(error => {
+        alert("Error fetching game: " + error.message);
+        window.location.href = "index.html"; // Redirect to index.html on error
+      });
+
+  });
+
+    document.getElementById("cancelButton").addEventListener("click", () => {
+      window.location.href = "index.html"; // Redirect to index.html on cancel
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+.status-active {
+      background-color: rgb(40, 158, 24);
+    }
+    .status-won {
+      background-color: #2f44ff; /* plum/purple */
+    }
+    .status-lost {
+      background-color: #ffa500; /* orange */
+    }
+
+
+.ok td {
+  background-color: rgb(40, 158, 24) !important;
+}
+.wrong td {
+  background-color: rgb(255, 0, 0) !important;
+}
+
+/* New styles for centering and spacing */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    overflow-y: auto; /* Ensure vertical scrollbar appears when content overflows */
+}
+
+h1 {
+    margin-bottom: 40px;
+}
+
+
+#container, #createGameContainer {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 20px; /* Adjust the spacing between the panel and the table */
+}
+
+#container {
+    height: 360px;
+}
+
+#buttonContainer {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 400px;
+  gap: 40px; /* increased spacing between buttons */
+}    
+
+
+#inputContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+#wordsPanel {
+    border: 1px solid black; /* Same border style as the table */
+    padding: 20px;
+    width: 200px;
+    box-sizing: border-box;
+}
+
+
+#gameStatus {
+    padding: 10px;
+    border: 1px solid #000;
+    background-color: #f0f0f0;
+    width: 200px;
+    text-align: center;
+}
+#hangmanPictureContainer {
+  border: 1px solid black;
+  padding: 20px;
+  width: 280px;
+  height: 360px;
+  box-sizing: border-box;
+}
+#hangmanPicture {
+  width: 240px;
+  height: 320px;
+}
+
+#mainGameContainer {
+  height: 360px;
+  min-width: 600px;
+  flex-direction: column;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: flex-start;
+  border: 1px solid black;
+  padding: 20px;
+}
+
+#attemptsDisplay {
+  width: 360px;
+  height: 360px;
+  border: 1px solid #000000;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+
+}
+
+#attemptsDisplay table {
+  width: 100%;
+  max-height: 100%;
+  border: 1px solid #000000;
+  border-collapse: collapse;
+}
+#attemptsDisplay th, #attemptsDisplay td {
+  padding: 4px 8px;
+  text-align: center;
+}
+
+#gameList {
+  width: 100%;
+  max-height: 100%;
+  border: 1px solid #000000;
+  border-collapse: collapse; /* ensure cells share borders */
+}
+#gameList th, #gameList td {
+  padding: 14px 14px;
+  text-align: center;
+  border: 1px solid #000000; /* added inner borders for cells */
+}
+
+#gameList tr.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+#gameList tr.clickable-row:hover {
+  background-color: #eef6ff !important; /* hover color - must override status colors */
+}
+#gameList tr.clickable-row.selected {
+  background-color: #72777c !important; /* clicked/selected color */
+}
+
+#messageDisplay {
+    padding: 10px;
+    border: 1px solid #000;
+    background-color: #f0f0f0;
+    width: 700px;
+    height: 25px;
+    font-size: 20px;
+    text-align: center;
+}
+
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+.footer {
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
+
+#letterInput {
+  text-transform: uppercase;
+  font-size: 2.5em;
+  width: 60px;
+  height: 60px;
+  text-align: center;
+  border: 2px solid #333;
+  border-radius: 8px;
+  margin: 0 10px;
+}
+
+#name,
+#password,
+#word {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+#letterInput:focus,
+#name:focus,
+#password:focus,
+#word:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px #007bff;
+}
+
+#word {
+  text-transform: uppercase;
+}
